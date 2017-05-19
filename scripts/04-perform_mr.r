@@ -1,7 +1,7 @@
 devtools::install_github("MRCIEU/TwoSampleMR@mr_structure")
 library(TwoSampleMR)
 library(dplyr)
-load("extract_data.rdata")
+load("../results/01/dat.rdata")
 
 d <- lapply(d, function(x) {
 	x <- subset(x, exposure != outcome)

@@ -1,8 +1,9 @@
 library(tidyverse)
 
 ao <- read_csv("../data/ao.csv")
-keep <- subset(ao, !is.na(EFO)) %>% 
-	select(id, trait, pmid, author, consortium, category, subcategory, EFO, EFO_id, match, sample_size, ncase, ncontrol, unit, sd) 
+ids <- scan("../results/01/ids.txt")
 
-nodes <- keep[sample(1:nrow(keep), 3, replace=FALSE), ]
+nodes <- subset(ao, id %in% ids) %>% 
+	dplyr::select(id, trait, pmid, author, consortium, category, subcategory, EFO, EFO_id, match, sample_size, ncase, ncontrol, unit, sd) 
+
 save(nodes, file="../results/01/nodes.rdata")
