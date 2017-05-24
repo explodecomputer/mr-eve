@@ -1,0 +1,145 @@
+Locus and gene ID (Cytoband) ,SNP,Biochemical(s),N,EA/OA1,EAF2,Effect (SE),P-value,Type
+5. CPT2 (1p32.3),rs13375749,glutaroyl carnitine,"7,256",T/C,0.78,0.030 (0.003),2.80E-28,Amino acids
+9. HAO2 (1p12),rs12141041,alpha-hydroxyisovalerate,"7,222",T/C,0.47,-0.025 (0.004),1.77E-12,Amino acids
+10. PHGDH (1p12),rs1163251,serine,"7,349",T/C,0.6,0.019 (0.002),7.05E-27,Amino acids
+13. FMO3 (1q24.3),rs7061710,X-11786 (methylcysteine),"2,773",C/G,0.23,0.045 (0.006),7.52E-14,Amino acids
+17. SLC1A4 (2p14),rs10211524,2-aminobutyrate,"7,365",A/G,0.42,0.019 (0.002),5.59E-16,Amino acids
+18. NAT8 (2p13.2),rs13538,N-acetylornithine/ myo-inositol,"7,130",A/G,0.78,0.223 (0.005),5.02E-498,Amino acids
+22. CPS1 (2q34),rs715,glycine,"7,356",T/C,0.71,-0.076 (0.003),1.58E-147,Amino acids
+26. SLC6A20 (3p21.31),rs17279437,X-11315/ pyroglutamine,"7,320",A/G,0.1,-0.094 (0.008),1.78E-35,Amino acids
+30. MCCC1 (3q27.1),rs2270968,hydroxyisovaleroyl carnitine,"5,306",T/G,0.26,0.031 (0.004),1.31E-16,Amino acids
+36. PPM1K (4q22.1),rs10022462,2-aminobutyrate,"7,365",T/C,0.45,-0.012 (0.002),4.55E-11,Amino acids
+37. TDO2 (4q32.1),rs13122250,tryptophan,"7,355",T/C,0.55,0.006 (0.001),8.95E-12,Amino acids
+42. BHMT (5q14.1),rs16876394,betaine,"7,357",T/C,0.9,0.030 (0.003),1.49E-19,Amino acids
+43. SLC22A4|SLC22A5 (5q31.1),rs272889,valine/ isovalerylcarnitine,"7,330",A/G,0.37,-0.039 (0.003),2.56E-51,Amino acids
+44. SLC22A4|SLC22A5 (5q31.1),rs2405522,tryptophan betaine ,"7,014",A/G,0.17,-0.126 (0.011),4.49E-29,Amino acids
+54. SLC16A10 (6q21),rs9400467,tyrosine,"7,358",T/C,0.71,-0.012 (0.002),6.54E-14,Amino acids
+55. SLC22A1 (6q25.3),rs662138,isobutyrylcarnitine,"7,365",C/G,0.83,0.077 (0.005),4.98E-49,Amino acids
+56. SLC22A1 (6q25.3),rs316020,X-12798/ phenylalanine,"7,100",A/G,0.09,-0.183 (0.005),2.77E-286,Amino acids
+58. DDC (7p12.2),rs7809234,"indoleacetate/ N2,N2-dimethylguanosine","4,830",A/T,0.88,0.049 (0.007),5.57E-14,Amino acids
+59. PSPH (7p11.2),rs4947534,serine,"7,349",T/C,0.25,-0.018 (0.002),1.96E-14,Amino acids
+65. ABP1 (7q36.1),rs1005390,4-acetamidobutanoate/ X-03056,"6,520",T/G,0.8,-0.035 (0.004),2.61E-16,Amino acids
+66. NAT2 (8p22),rs4921914,1-methylxanthine,"5,195",T/C,0.78,0.088 (0.005),1.09E-60,Amino acids
+67. ADRA1A (8p21.2),rs13278849,levulinate (4-oxovalerate),"6,535",A/G,0.73,-0.013 (0.002),2.79E-11,Amino acids
+68. IDO1 (8p11.21),rs2160860,X-12100 (hydroxytryptophan),"7,066",A/T,0.61,0.012 (0.002),7.35E-11,Amino acids
+69. SNAI2 (8q11.21),rs10504073,lysine/ glutaroyl carnitine,"7,250",T/C,0.54,0.031 (0.003),3.40E-32,Amino acids
+70. ADHFE1 (8q13.1),rs10112574,"X-04499 (3,4-dihydroxybutyrate/ C-glycosyltryptophan)","6,520",A/G,0.2,-0.025 (0.003),2.82E-14,Amino acids
+71. OPLAH (8q24.3),rs12550729,5-oxoproline,"7,354",T/C,0.92,0.064 (0.003),5.97E-110,Amino acids
+72. CCBL1 (9q34.11),rs15676,indolelactate,"6,939",A/G,0.71,0.019 (0.003),1.33E-12,Amino acids
+83. ALDH18A1 (10q24.1),rs56322409,citrulline,"7,325",T/C,0.63,-0.011 (0.002),7.81E-11,Amino acids
+86. PAOX (10q26.3),rs11101730,X-03056--N-[3-(2-oxopyrrolidin-1-yl)propyl]acetamide,"7,363",A/T,0.94,-0.055 (0.008),3.28E-13,Amino acids
+87. HPS5 (11p15.1),rs4150581,3-(4-hydroxyphenyl)lactate/ alpha-hydroxyisovalerate,"7,190",A/G,0.45,-0.043 (0.003),2.47E-37,Amino acids
+92. SLC6A12 (12p13.33),rs499368,betaine,"7,357",A/T,0.53,-0.019 (0.003),8.14E-13,Amino acids
+93. SLC6A13 (12p13.33),rs7969761,betaine/ pyroglutamine,"7,340",T/C,0.56,-0.045 (0.004),1.01E-27,Amino acids
+94. SLCO1B1 (12p12.1),rs4149056,isoleucine/ X-11529,"6,230",T/C,0.82,0.300 (0.008),6.16E-328,Amino acids
+97. PAH (12q23.2),rs1498694,phenylalanine,"7,354",A/G,0.4,0.008 (0.001),7.34E-11,Amino acids
+98. SH2B3 (12q24.12),rs3184504,kynurenine,"7,368",T/C,0.49,0.015 (0.002),6.05E-18,Amino acids
+100. WDR66 (12q24.31),rs493519,2-hydroxyisobutyrate,"6,180",T/C,0.13,-0.036 (0.004),1.32E-18,Amino acids
+105. ASPG (14q32.33),rs4144027,asparagine,"7,316",T/C,0.6,0.012 (0.002),1.33E-11,Amino acids
+106. IVD (15q15.1),rs9635324,propionylcarnitine/ isovalerylcarnitine,"7,340",A/G,0.61,-0.036 (0.003),8.75E-43,Amino acids
+111. SCAPER (15q24.3),rs2404602,isobutyrylcarnitine,"7,365",A/G,0.44,0.026 (0.004),3.56E-13,Amino acids
+116. ACSM5 (16p12.3),rs11647589,3-phenylpropionate (hydrocinnamate),"5,829",A/G,0.72,0.030 (0.005),2.85E-11,Amino acids
+118. ACSM2A (16p12.3),rs1394678,indolepropionate,"7,358",T/C,0.28,-0.035 (0.004),1.70E-20,Amino acids
+121. GOT2 (16q21),rs4784054,phenyllactate (PLA),"5,702",A/G,0.11,0.035 (0.004),2.31E-21,Amino acids
+122. GOT2 (16q21),rs12709013,phenyllactate (PLA)/ phenylalanine,"5,690",T/C,0.44,0.027 (0.003),2.72E-24,Amino acids
+123. SLC7A6 (16q22.1),rs8056893,lysine/ glutaroyl carnitine,"7,250",A/C,0.73,0.044 (0.003),2.50E-39,Amino acids
+124. SLC7A5 (16q24.2),rs8051149,kynurenine,"7,368",A/G,0.21,0.026 (0.003),9.07E-26,Amino acids
+130. CCDC57 (17q25.3),rs4625783,3-(4-hydroxyphenyl)lactate,"7,346",T/C,0.43,-0.019 (0.003),3.90E-13,Amino acids
+132. GCDH (19p13.13),rs8012,glutaroyl carnitine,"7,256",A/G,0.44,0.037 (0.003),6.36E-45,Amino acids
+134. SLC7A9 (19q13.11),rs8101881,homocitrulline,"3,950",T/C,0.61,0.033 (0.004),1.43E-16,Amino acids
+140. CBS (21q22.3),rs2851391,betaine,"7,357",T/C,0.46,-0.012 (0.002),1.15E-11,Amino acids
+141. PRODH (22q11.21),rs2540647,valine/ proline,"7,353",A/G,0.09,-0.059 (0.003),2.04E-70,Amino acids
+143. GGT1 (22q11.23),rs2330809,cysteine-glutathione disulfide,"1,982",T/C,0.32,-0.055 (0.007),1.76E-13,Amino acids
+145. ARSA (22q13.33),rs6151429,X-11423 (O-sulfo-L-tyrosine),"7,318",T/C,0.93,-0.029 (0.003),6.51E-18,Amino acids
+15. GCKR (2p23.3),rs1260326,glucose/ mannose,"7,310",T/C,0.41,0.041 (0.002),2.50E-148,Carbohydrates
+20. RAB3GAP1 (2q21.3),rs7570971,"1,5-anhydroglucitol (1,5-AG)","7,301",A/C,0.33,-0.037 (0.003),7.86E-45,Carbohydrates
+64. MGAM (7q34),rs3800993,"1,5-anhydroglucitol (1,5-AG)","7,301",T/C,0.17,0.029 (0.004),1.53E-15,Carbohydrates
+14. SLC5A6 (2p23.3),rs1395,pantothenate,"7,160",A/G,0.7,0.017 (0.003),8.14E-11,Cofactors and vitamins 
+23. UGT1A1 (2q37.1),rs887829,biliverdin,"6,252",T/C,0.34,0.113 (0.004),2.50E-168,Cofactors and vitamins 
+142. COMT (22q11.21),rs4680,X-11593 (O-methylascorbate),"7,344",A/G,0.51,-0.049 (0.002),4.66E-178,Cofactors and vitamins 
+27. TKT (3p21.1),rs4687717,phosphate/ erythronate,"7,280",T/C,0.42,-0.018 (0.002),8.85E-23,Energy
+28. SUCLG2 (3p14.1),rs17806888,succinylcarnitine,"6,552",T/C,0.88,-0.022 (0.003),7.15E-11,Energy
+40. ANKH (5p15.2),rs835154,citrate,"7,364",A/G,0.55,-0.012 (0.002),1.02E-10,Energy
+73. CRAT (9q34.11),rs7849270,C-glycosyltryptophan/ succinylcarnitine,"6,530",A/G,0.3,0.025 (0.003),2.82E-21,Energy
+110. LACTB (15q22.2),rs1472631,succinylcarnitine,"6,552",A/G,0.49,0.037 (0.002),1.85E-88,Energy
+126. SLC13A5 (17p13.2),rs170149,citrate,"7,364",A/G,0.07,0.026 (0.004),1.42E-13,Energy
+127. SLC13A5 (17p13.2),rs1509123,citrate,"7,364",T/C,0.05,-0.025 (0.004),5.20E-09,Energy
+4. CYP4A11 (1p33),rs6678639,10-undecenoate (11:1n1)/ X-11438,"6,650",A/G,0.86,-0.085 (0.004),8.27E-86,Lipids
+7. ACADM (1p31.1),rs4949874,acetylcarnitine/ hexanoylcarnitine,"7,330",T/C,0.7,-0.073 (0.003),2.02E-172,Lipids
+8. ALX3 (1p13.3),rs1466788,carnitine,"7,349",A/G,0.41,-0.007 (0.001),3.05E-16,Lipids
+11. THEM4 (1q21.3),rs6693388,"linoleate (18:2n6)/ X-12442 (5,8-tetradecadienoate)","7,300",T/C,0.69,-0.041 (0.003),3.72E-38,Lipids
+21. ACADL (2q34),rs3738934,X-13431 (nonanoylcarnitine),"6,234",T/C,0.62,-0.106 (0.004),1.21E-134,Lipids
+29. PEX5L (3q26.33),rs9842133,carnitine,"7,349",T/C,0.66,0.006 (0.001),4.20E-12,Lipids
+38. ETFDH (4q32.1),rs4690909,octanoylcarnitine/ X-13435,"6,520",C/G,0.69,0.056 (0.004),1.76E-57,Lipids
+47. ELOVL2 (6p24.2),rs9393915,docosapentaenoate (n3 DPA; 22:5n3)/ X-12627,"6,990",T/C,0.22,0.042 (0.004),1.42E-22,Lipids
+49. SLC17A3 (6p22.2),rs1185567,"dehydroisoandrosterone sulfate (DHEA-S)/ 4-androsten-3beta,17beta-diol disulfate 2","7,330",A/G,0.44,-0.028 (0.003),1.07E-26,Lipids
+60. CYP3A5 (7q22.1),rs7809615,"androsterone sulfate/ 4-androsten-3beta,17beta-diol disulfate 2","7,310",T/G,0.09,-0.249 (0.010),7.98E-139,Lipids
+62. ZCWPW1 (7q22.1),rs13222543,"androsterone sulfate/ 4-androsten-3beta,17beta-diol disulfate 2","7,310",T/C,0.02,-0.490 (0.023),4.49E-104,Lipids
+76. AKR1C4 (10p15.1),rs17134585,androsterone sulfate/ epiandrosterone sulfate,"7,310",T/C,0.84,0.043 (0.003),2.95E-38,Lipids
+77. MARCH8 (10q11.21),rs2291429,3-dehydrocarnitine,"7,361",A/C,0.76,0.017 (0.003),8.69E-11,Lipids
+78. SLC16A9 (10q21.1),rs1171615,carnitine/ X-12798,"7,100",T/C,0.78,0.077 (0.004),2.40E-95,Lipids
+85. SCD (10q24.31),rs603424,myristate (14:0)/ myristoleate (14:1n5),"7,350",A/G,0.18,0.054 (0.002),1.21E-115,Lipids
+88. FADS1 (11q12.2),rs174548,arachidonate (20:4n6)/ dihomo-linolenate (20:3n3 or n6),"7,350",C/G,0.7,0.071 (0.002),1.53E-361,Lipids
+89. FADS1 (11q12.2),rs2727271,X-12990 (docosapentaenoic acid (n6-DPA)),"2,545",A/T,0.89,0.055 (0.008),2.74E-11,Lipids
+90. APOA5 (11q23.3),rs11825181,1-linoleoylglycerol (1-monolinolein),"2,759",A/G,0.08,0.076 (0.011),2.93E-11,Lipids
+95. SLCO1B1 (12p12.1),rs12829704,octadecanedioate,"6,876",A/G,0.19,-0.042 (0.005),9.49E-21,Lipids
+99. ACADS (12q24.31),rs2066938,butyrylcarnitine,"7,349",A/G,0.74,-0.211 (0.004),3.16E-630,Lipids
+103. SGPP1 (14q23.2),rs7157785,X-08402/ cholesterol,"7,280",T/G,0.16,0.065 (0.003),1.39E-133,Lipids
+107. SLC27A2 (15q21.2),rs1365505,10-undecenoate (11:1n1)/ X-11438,"6,650",T/C,0.68,-0.025 (0.003),3.84E-14,Lipids
+108. LIPC (15q22.1),rs10468017,1-palmitoylglycero-phosphoethanolamine,"7,317",T/C,0.29,0.019 (0.003),3.33E-12,Lipids
+109. LIPC (15q22.1),rs2070895,1-palmitoylglycero-phosphoethanolamine,"7,317",A/G,0.21,0.030 (0.003),1.36E-18,Lipids
+114. PDXDC1 (16p13.11),rs2740,linoleate (18:2n6)/ dihomo-linolenate (20:3n3 or n6),"7,320",A/G,0.71,-0.022 (0.002),5.29E-32,Lipids
+115. ABCC1 (16p13.11),rs2062541,hexanoylcarnitine/ octanoylcarnitine,"7,330",A/G,0.61,-0.018 (0.002),1.05E-25,Lipids
+119. SLC5A11 (16p12.1),rs4787294,scyllo-inositol,"6,119",A/T,0.93,0.075 (0.008),9.64E-21,Lipids
+128. ALOX12 (17p13.1),rs2271316,X-12441 (12-hydroxyeicosatetraenoate (12-HETE)),"2,725",C/G,0.38,0.113 (0.011),1.79E-23,Lipids
+133. ISYNA1 (19p13.11),rs4808136,myo-inositol,"7,354",A/G,0.34,0.013 (0.002),5.42E-14,Lipids
+135. APOE (19q13.32),rs445925,X-11820/ cholesterol,"5,510",A/G,0.08,0.089 (0.009),4.65E-23,Lipids
+136. SULT2A1 (19q13.32),rs2547231,"X-11440/ 4-androsten-3beta,17beta-diol disulfate 2","7,240",A/C,0.83,0.141 (0.005),3.06E-191,Lipids
+138. MBOAT7 (19q13.42),rs2576452,arachidonate (20:4n6)/ 1-arachidonoylglycero-phosphoinositol,"7,345",T/C,0.44,0.028 (0.003),2.39E-29,Lipids
+139. SPTLC3 (20p12.1),rs4814176,X-10510/ palmitoyl sphingomyelin,"7,343",T/C,0.4,0.021 (0.002),7.49E-33,Lipids
+19. ACMSD (2q21.3),rs6430553,X-12095 (N1-methyl-3-pyridone-4-carboxamide),"7,269",T/C,0.39,-0.018 (0.003),6.29E-12,Nucleotides
+33. SLC2A9 (4p16.1),rs938554,urate,"7,371",C/G,0.23,-0.035 (0.002),5.85E-93,Nucleotides
+48. GMPR (6p22.3),rs6459467,hypoxanthine,"6,941",A/G,0.39,0.020 (0.003),1.93E-16,Nucleotides
+52. NT5E (6q14.3),rs494562,inosine,"2,639",A/G,0.9,-0.118 (0.017),1.34E-12,Nucleotides
+63. AKR1D1 (7q34),rs6980334,X-12095 (N1-methyl-3-pyridone-4-carboxamide)/ X-12844,"7,220",A/G,0.76,-0.038 (0.004),4.48E-20,Nucleotides
+144. TYMP (22q13.33),rs131794,uridine,"7,354",A/C,0.21,0.015 (0.002),4.37E-16,Nucleotides
+1. ALPL (1p36.12),rs1697421,DSGEGDFXAEGGGVR/ ADpSGEGDFXAEGGGVR,"3,777",T/C,0.52,-0.056 (0.006),1.56E-20,Peptides
+25. GADL1 (3p24.1),rs6804368,X-12244 (N-acetylcarnosine),"6,279",A/G,0.57,0.022 (0.002),8.17E-21,Peptides
+31. KNG1 (3q27.3),rs5030062,"bradykinin, des-arg(9)","4,452",A/C,0.61,-0.072 (0.010),5.94E-13,Peptides
+39. KLKB1 (4q35.2),rs4253311,"bradykinin, des-arg(9)","4,452",A/G,0.49,-0.141 (0.010),3.56E-48,Peptides
+45. F12 (5q35.3),rs2731672,"X-12038/ bradykinin, des-arg(9)","2,930",T/C,0.26,0.179 (0.017),6.32E-26,Peptides
+53. PM20D2 (6q15),rs7775554,X-12244 (N-acetylcarnosine),"6,279",A/C,0.53,0.019 (0.002),1.35E-15,Peptides
+74. ABO (9q34.2),rs649129,ADSGEGDFXAEGGGVR/ ADpSGEGDFXAEGGGVR,"3,788",T/C,0.22,-0.085 (0.007),9.26E-37,Peptides
+96. GLS2 (12q13.2),rs2694917,glutamine/ histidine,"7,350",T/C,0.81,0.018 (0.002),1.64E-29,Peptides
+101. ABCC4 (13q32.1),rs8002180,X-12244 (N-acetylcarnosine),"6,279",T/C,0.72,-0.024 (0.002),8.23E-23,Peptides
+102. ABCC4 (13q32.1),rs9302065,X-12244 (N-acetylcarnosine),"6,279",A/G,0.37,0.022 (0.002),1.17E-19,Peptides
+112. ANPEP (15q26.1),rs2007084,HWESASXX,"7,255",A/G,0.09,-0.068 (0.010),1.77E-12,Peptides
+129. ACE (17q23.3),rs4343,aspartylphenylalanine/ X-14450 (phenylalanylleucine),"2,510",A/G,0.47,-0.059 (0.005),1.21E-37,Peptides
+137. FUT2 (19q13.33),rs601338,ADSGEGDFXAEGGGVR/ ADpSGEGDFXAEGGGVR,"3,788",A/G,0.43,-0.055 (0.006),1.65E-20,Peptides
+2. NASP (1p34.1),rs1053941,erythritol,"7,327",T/G,0.23,-0.017 (0.003),4.99E-11,Xenobiotics
+3. DMBX1 (1p33),rs7542172,erythritol,"7,327",A/G,0.15,-0.024 (0.003),1.98E-12,Xenobiotics
+57. AHR (7p21.1),rs6968554,caffeine,"7,274",A/G,0.38,0.064 (0.009),8.68E-14,Xenobiotics
+6. ANGPTL3 (1p31.3),rs6679002,X-03094,"7,356",T/G,0.59,0.014 (0.002),2.16E-15,Unknowns
+12. NR1I3 (1q23.3),rs4073054,X-10395,"7,340",A/C,0.63,0.016 (0.002),4.42E-19,Unknowns
+16. SRD5A2 (2p23.1),rs559555,X-11444/ X-12844,"7,300",A/T,0.56,0.036 (0.003),1.24E-44,Unknowns
+24. AGXT (2q37.3),rs4675874,X-12556,"7,049",A/G,0.71,-0.024 (0.003),3.13E-20,Unknowns
+32. SLC51A (3q29),rs7642243,X-09789,"7,356",C/G,0.39,0.048 (0.006),7.50E-16,Unknowns
+34. GBA3 (4p15.31),rs3099557,X-11799,"4,817",A/G,0.85,-0.148 (0.011),1.83E-39,Unknowns
+41. UGT3A1 (5p13.2),rs10491431,X-11445,"2,537",A/C,0.15,0.081 (0.012),1.59E-11,Unknowns
+46. ECI2 (6p25.2),rs9392556,X-13435,"6,543",T/C,0.66,-0.036 (0.003),4.03E-38,Unknowns
+50. PRRC2A (6p21.33),rs1046080,X-11444/ X-11470,"6,850",A/C,0.74,0.027 (0.004),1.19E-14,Unknowns
+51. SKIV2L (6p21.32),rs2734331,X-11470,"6,857",A/G,0.97,0.073 (0.010),6.56E-13,Unknowns
+61. CYP3A5 (7q22.1),rs10242455,X-12063,"6,797",A/G,0.93,0.221 (0.010),1.67E-109,Unknowns
+75. DIP2C (10p15.3),rs12246027,X-13548,"5,768",A/G,0.27,0.012 (0.002),1.05E-10,Unknowns
+79. CYP2C9 (10q23.33),rs4986894,X-14473,"6,486",T/C,0.84,-0.042 (0.006),5.55E-12,Unknowns
+80. CYP2C9 (10q23.33),rs1853207,X-11247,"6,970",T/C,0.06,0.109 (0.015),9.58E-13,Unknowns
+81. CYP2C9 (10q23.33),rs1934963,X-11787,"7,362",T/C,0.8,0.029 (0.002),8.69E-65,Unknowns
+82. CYP2C8 (10q23.33),rs1934955,X-02249,"7,369",A/G,0.71,-0.030 (0.004),3.33E-16,Unknowns
+84. PYROXD2 (10q24.2),rs4488133,X-12092,"7,089",A/T,0.66,0.282 (0.005),3.01E-860,Unknowns
+91. ZNF259 (11q23.3),rs964184,X-03094,"7,356",C/G,0.86,-0.025 (0.003),7.95E-15,Unknowns
+104. HEATR4 (14q24.3),rs8018967,X-13215/ X-13671,"5,680",T/C,0.66,-0.033 (0.004),5.57E-19,Unknowns
+113. NUBP2 (16p13.3),rs2235649,X-12556,"7,049",T/C,0.22,-0.018 (0.003),1.95E-11,Unknowns
+117. ACSM2A (16p12.3),rs6497490,X-11478,"6,169",T/G,0.88,-0.082 (0.008),4.95E-27,Unknowns
+120. CETP (16q13),rs1800775,X-12038,"7,315",A/C,0.5,0.013 (0.002),1.02E-11,Unknowns
+125. RNF167 (17p13.2),rs12602901,X-03056,"7,363",C/G,0.17,-0.037 (0.003),1.15E-26,Unknowns
+131. LIPG (18q21.1),rs2187375,X-03094,"7,356",A/G,0.17,-0.022 (0.003),2.65E-17,Unknowns
