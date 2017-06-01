@@ -141,7 +141,7 @@ write.csv(gene_snp, file="../results/01/upload/gene_snp.csv", row.names=FALSE, n
 ## SNP-trait
 snp_trait <- subset(snp_trait, select=-c(mr_keep.exposure, exposure, SNP))
 names(snp_trait) <- gsub(".exposure", "", names(snp_trait))
-snp_trait <- modify_rel_headers_for_neo4j(snp_trait, "id", "trait", "snp_id", "snp")
+snp_trait <- modify_rel_headers_for_neo4j(snp_trait, "snp_id", "snp", "id", "trait")
 write.csv(snp_trait, file="../results/01/upload/snp_trait.csv", row.names=FALSE, na="")
 
 ## trait-trait
@@ -164,13 +164,13 @@ write.csv(m12, "../results/01/upload/trait_trait.csv", row.names=FALSE, na="")
 
 cmd <- paste0(
 "~/neo4j-community-3.2.0/bin/neo4j-admin import", 
-"--database mr-eve.db", 
-"--id-type string", 
-"--nodes:gene ../results/01/upload/genes.csv", 
-"--nodes:snp ../results/01/upload/snps.csv", 
-"--nodes:trait ../results/01/upload/traits.csv", 
-"--relationships:GS ../results/01/upload/gene_snp.csv", 
-"--relationships:GA ../results/01/upload/snp_trait.csv", 
-"--relationships:MR ../results/01/upload/trait_trait.csv"
+" --database mr-eve.db", 
+" --id-type string", 
+" --nodes:gene ../results/01/upload/genes.csv", 
+" --nodes:snp ../results/01/upload/snps.csv", 
+" --nodes:trait ../results/01/upload/traits.csv", 
+" --relationships:GS ../results/01/upload/gene_snp.csv", 
+" --relationships:GA ../results/01/upload/snp_trait.csv", 
+" --relationships:MR ../results/01/upload/trait_trait.csv"
 )
 system(cmd)
