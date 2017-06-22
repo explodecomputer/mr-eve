@@ -29,3 +29,22 @@ need two files
 
 
 
+
+
+the paper
+
+the causal map of the human phenome: a first draft
+
+- intro
+    - methods and data enable faster causal inference
+    - hypothesis driven analysis should use all methods to scrutinise
+    - we can precalculate these estimates but automation requires a number of things still
+        - instrument selection using steiger test
+        - method selection using linear discriminant analysis
+    - here we introduce a comprehensive analysis of 150 traits, introducing two ways for automating instrument selection and method selection
+
+- results
+    - created graph
+    - steiger method simulations
+    - method selection simulations
+
