@@ -4,7 +4,7 @@
 #PBS -o job_reports/mr-output
 #PBS -e job_reports/mr-error
 #PBS -l walltime=12:00:00
-#PBS -t 1-100
+#PBS -t 1-724
 #PBS -l nodes=1:ppn=1
 #PBS -S /bin/bash
 
