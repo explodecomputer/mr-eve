@@ -80,7 +80,7 @@
   \preauthor{}\postauthor{}
   \predate{\centering\large\emph}
   \postdate{\par}
-  \date{\texttt{r\ format(Sys.time(),\ \textquotesingle{}\%d\ \%B\ \%Y\textquotesingle{})}}
+  \date{26 June 2017}
 
 \begin{document}
 \maketitle
@@ -91,15 +91,18 @@ Mendelian randomisation (MR) (1,2) exploits genetic pleiotropy to infer
 the causal relationships between phenotypes. Suppose that one trait (the
 exposure) causally influences another (the outcome). If a SNP influences
 the outcome through the exposure then the SNP is exhibiting vertical
-pleiotropy. Such a genetic variant is known as an instrumental variable
-for the exposure, and can be exploited to mimic a randomised controlled
-trial, making causal inference by comparing the outcome phenotypes
-between those individuals that have the exposure-increasing allele
-against those who do not. Multiple independent genetic variants for a
-particular exposure can be used jointly to improve causal inference, the
-premise being that each variant is an independent natural experiment,
-and an overall causal estimate can be obtained by meta-analysing the
-single estimates from each instrument.
+pleiotropy. Such a genetic variant is considered to be an instrumental
+variable for the exposure, and can be exploited to mimic a randomised
+controlled trial, enabling a causal estimate to be made by comparing the
+outcome phenotypes between those individuals that have the
+exposure-increasing allele against those who do not. Multiple
+independent genetic variants for a particular exposure can be used
+jointly to improve causal inference, because a) each variant is an
+independent natural experiment, and an overall causal estimate can be
+obtained by meta-analysing the single estimates from each instrument;
+and b) some violations of the assumptions of MR (most notably that the
+SNP influences the outcome through no pathways other than the exposure)
+can be evaluated through sensitivity analyses.
 
 Genome-wide association studies (GWAS) have identified genetic
 instrumental variables for thousands of phenotypes. Recent developments
@@ -137,15 +140,47 @@ to make causal effect estimates for thousands of traits, in which case a
 discerning evaluation of each causal effect of interest may not be
 possible or convenient.
 
-In this paper we introduce new machine learning approaches that attempt
-to automate both instrument and method selection. Using curated GWAS
-summary data for thousands of phenotypes, we use these new methods to
-construct a graph of millions of causal estimates.
+In this paper we introduce two innovations towards improving the
+reliability of MR estimates. First, we introduce an approach to
+automatically discard genetic variants that are likely to be invalid.
+Second, we hypothesised that characteristics of the summary data could
+indicate which method would be most reliable, and we introduce new
+machine learning approaches that attempt to automate both instrument and
+method selection. Using curated GWAS summary data for thousands of
+phenotypes, we use these new methods to construct a graph of millions of
+causal estimates. We consider this to be only a `first draft' of the
+causal map of the human phenome.
 
 \subsection{Methods}\label{methods}
 
 \subsubsection{GWAS summary data and their use in
 2SMR}\label{gwas-summary-data-and-their-use-in-2smr}
+
+The use of summary data in two-sample MR is described in detail
+elsewhere. A brief outline of the procedure is as follows. First,
+genetic instruments for the exposure trait need to be identified - those
+SNPs with \(p < 10^{-8}\) are retained, collecting their effect sizes
+and standard errors and effect alleles for the association with the
+exposure trait. These can be obtanied manually from complete summary
+data or from curated lists of significant GWAS associations. Next, the
+effects of those SNPs on the outcome need to be obtained, typically
+necessitating complete summary data because it is unlikely that these
+SNPs will have reached genome-wide significance (and therefore be
+present in curated catalogues). At its most simple implementation, the
+regression of the SNP-exposure effect sizes against the SNP-outcome
+effect sizes, with greater weight afforded to those SNPs with smaller
+SNP-outcome standard errors, provides the estimate of the causal effect
+of the exposure on the outcome.
+
+Given summary data for a large number of traits, it is straightforward
+to exhaustively analyse the causal relationships of every trait against
+every other trait for which there is sufficient summary data available.
+Supplementary table X provides a list of all traits that have available
+GWAS summary data, indicating if they have complete summary data (in
+which case they can be used as both exposure traits and outcome traits),
+or if they only have significant associations (in which they can only be
+used as exposure traits). Supplementary table X provides a list of the
+genetic instruments used for each trait.
 
 \subsubsection{Mendelian randomisation methods and their
 assumptions}\label{mendelian-randomisation-methods-and-their-assumptions}
@@ -153,22 +188,27 @@ assumptions}\label{mendelian-randomisation-methods-and-their-assumptions}
 In this paper we consider three main classes of MR estimation. Full
 details for each approach have been described extensively elsewhere.
 
-\textbf{Mean-based methods:} The inverse variance weighted (IVW)
-meta-analysis approach assumes that variant exhibits no HP (fixed
-effects meta-analysis) or that HP is present but balanced (random
-effects meta-analysis). Egger regression relaxes the HP assumption
-further by allowing the horizontal pleiotropy to systematically occur in
-a specific direction, known as directional horizontal pleiotropy. The
-Rucker framework uses estimates of heterogeneity to navigate between
-these nested models. A jackknife approach (random selection with
-replacement of instruments) can be used to obtain a sampling
-distribution for the model estimate amongst these four variations.
+\textbf{Mean-based methods:} Here we consider four nested models. The
+inverse variance weighted (IVW) fixed effects meta-analysis approach
+assumes that variants exhibit no HP. IVW random effects meta-analysis
+relaxes the HP assumption, allowing it to be present but balanced - such
+that it only leads to increased heterogeneity around the regression and
+not introducing bias. Fixed effects Egger regression relaxes the HP
+assumption further by allowing a non-zero intercept which essentially
+allows horizontal pleiotropy be directional, where it systematically
+occurs in a specific direction. Random effects Egger regression allows
+heterogeneity around the directional HP, as long as the HP effects are
+not correlated with the SNP-exposure effects (this is the INSIDE
+assumption).
 
-The Rucker framework is a system used in meta-analysis to navigate
-between IVW and Egger regression, and fixed and random effects models.
-It was recently applied to MR to use heterogeneity statistics to select
-the most appropriate model of pleiotropy, and therefore the most
-appropriate MR method amongst the four mean-based estimators. There
+The Rucker framework uses estimates of heterogeneity in the IVW and
+Egger frameworks to navigate between these nested models. A jackknife
+approach (random selection with replacement of instruments) can be used
+to obtain a sampling distribution for the model estimate amongst these
+four variations. Using 1000 rounds of jackknife estimates, we can obtain
+a final estimate using the mean or the median of the distribution. We
+only use the jackknife approach for associations where there are 15 or
+more variants to avoid combinatorial saturation.
 
 \textbf{Median-based methods:} An alternative approach is to take the
 median effect of all available instruments. This has the advantage that
@@ -178,7 +218,14 @@ to contribute more towards the estimate can be obtained by obtaining the
 median of the weights of each instrument. The penalised weighted median
 estimator \ldots{}
 
-\textbf{Mode-based methods:} Supposing that
+\textbf{Mode-based methods:} Similar to the median, the mode based
+estimator clusters the instruments into groups based on similarity of
+causal effects, and returns the final causal effect estimate based on
+the cluster that has the largest number of instruments. This can be
+extended in two ways, first by weighting the strength of each cluster by
+the inverse of the variance of the SNP-outcome associations in the
+cluster; second by weighting the strength of each cluster by the inverse
+of the variance of the SNP-exposure associations.
 
 \subsubsection{Instrument selection}\label{instrument-selection}
 
@@ -341,7 +388,7 @@ effects sampled using
 
 \[
 \begin{aligned}
-\beta_{gx,y,i*} & \sim N(\mu_{gx,y}, \sigma^2_{gx,y}) \times  \\
+\beta_{gx,y,i*} & \sim N(\mu_{gx,y}, \sigma^2_{gx,y})  \\
 \mu_{gx,y,i*} & \sim U(-0.005, 0.005) \\
 \sigma^2_{gx,y,i*} & \sim U(0.001, 0.01) \\
 \beta_{gy,x,j*} & \sim N(\mu_{gy,x}, \sigma^2_{gy,x}) \\
@@ -422,11 +469,83 @@ is
 \[
     O_{w,d} = 
 \begin{cases}
-    1,              & \text{if } \beta_{x,y} \neq 0 \text{and } p_{m,d} < 0.01\\
-    1,              & \text{if } \beta_{x,y} = 0 \text{and } p_{m,d} > 0.1 \\
-    0,              & \text{otherwise}
+    1,   & \text{if } \beta_{x,y} \neq 0 \text{and } p_{m,d} < 0.01\\
+    1,   & \text{if } \beta_{x,y} = 0 \text{and } p_{m,d} > 0.1 \\
+    0,   & \text{otherwise}
 \end{cases}
 \]
+
+\subsubsection{Graph database}\label{graph-database}
+
+The set of MR estimates obtained from this analysis are recorded in a
+Neo4j graph database. Because each association has up to 28 different
+estimates, for simplicity we distill this down to a single `best
+estimate' for each association using the following rules:
+
+\begin{enumerate}
+\def\labelenumi{\arabic{enumi}.}
+\tightlist
+\item
+  If the number of variants after Steiger filtering is greater than 5
+  then apply the MoE to obtain the best method
+\item
+  If the number of variants after Steiger filtering is less than or
+  equal to 5 but greater than 1 then use the IVW random effects approach
+  on the filtered set of variants
+\item
+  If there is 1 variant retained in the Steiger approach then use the
+  Wald ratio on the remaining variant
+\item
+  If there are no variants remaining after Steiger filtering then
+  declare no causal association.
+\end{enumerate}
+
+For specific hypotheses we strongly recommend that estimates from all
+sensitivity analyses are scrutinised and reported.
+
+\subsection{Results}\label{results}
+
+\subsubsection{Steiger filtering improves
+reliability}\label{steiger-filtering-improves-reliability}
+
+\subsubsection{Mixture of experts method selection improves over any
+single
+method}\label{mixture-of-experts-method-selection-improves-over-any-single-method}
+
+Number of associations using different approaches Which methods were
+preferentially chosen
+
+\subsubsection{A first draft of the causal map of the human
+phenome}\label{a-first-draft-of-the-causal-map-of-the-human-phenome}
+
+How many associations reach nominal or FDR corrected significance How
+many bi-directional associations How many associations could be declared
+for a causal chain of 2
+
+\subsection{Discussion}\label{discussion}
+
+\begin{itemize}
+\tightlist
+\item
+  Limitations of MR that cannot be addressed without biological
+  information
+
+  \begin{itemize}
+  \tightlist
+  \item
+    Impossible causal associations
+  \item
+    Temporal effects
+  \item
+    Risk liability etc
+  \item
+    Single variants
+  \end{itemize}
+\item
+  Further developments required to improve causal estimates
+\item
+  The use of causal chains to improve power
+\end{itemize}
 
 \subsection*{References}\label{references}
 \addcontentsline{toc}{subsection}{References}
