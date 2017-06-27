@@ -95,7 +95,12 @@ ucsc_get_position <- function(snp)
 # - SNP-Trait
 # - Trait-Trait
 
-load("../results/01/nodes.rdata")
+load("../results/01/outcome_nodes.rdata")
+load("../results/01/exposure_dat.rdata")
+
+exposure_nodes <- subset(exposure_dat, !duplicated(id.exposure))
+table(exposure_nodes$id.exposure %in% outcome_nodes)
+
 load("../results/01/extract.rdata")
 load("../results/01/mr.rdata")
 

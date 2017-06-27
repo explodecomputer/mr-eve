@@ -1,0 +1,29 @@
+"","Method","pred1","pred2","pred3","rsq","prop","fdr","pow"
+"1","Egger fixed effects - steiger","dfb3_egger_after_steiger","ks_ivw_after_steiger","ks_egger_after_steiger",0.176712582098082,0.00595790224759187,0.440677966101695,0.811688311688312
+"2","Egger fixed effects - tophits","dfb3_egger_after_steiger","dfb3_egger","ks_egger_after_steiger",0.184257318218019,0.00385301462718516,1,0.990566037735849
+"3","Egger random effects - steiger","homosc_ivw_after_steiger","ks_ivw_after_steiger","homosc_egg_after_steiger",0.236648732787297,0.0384587941491259,0.0585365853658537,0.23976023976024
+"4","Egger random effects - tophits","ks_ivw_after_steiger","Qdiff_after_steiger","Qdiff",0.100931519333281,0.00756332500891901,0.116402116402116,0.132352941176471
+"5","IVW fixed effects - steiger","dfb3_egger_after_steiger","ks_egger_after_steiger","dfb1_egger",0.172678142905858,0.00346057795219408,0.851851851851852,0.870967741935484
+"6","IVW fixed effects - tophits","dfb3_egger_after_steiger","dfb3_egger","ks_egger_after_steiger",0.190537130793936,0.00495897252943275,1,0.992424242424242
+"7","IVW random effects - steiger","ks_ivw_after_steiger","homosc_ivw_after_steiger","ks_egger_after_steiger",0.194009833527283,0.0105957902247592,0.157303370786517,0.503846153846154
+"8","IVW random effects - tophits","ks_ivw","ks_egger","ks_ivw_after_steiger",0.132151828295113,0.00635033892258295,0.174311926605505,0.503225806451613
+"9","Penalised median - steiger","shap_ivw_after_steiger","shap_egger_after_steiger","homosc_ivw_after_steiger",0.0489189055944607,0.0696039957188726,0.450537634408602,0.741953698475438
+"10","Penalised median - tophits","shap_egger_after_steiger","shap_ivw_after_steiger","homosc_ivw_after_steiger",0.0682486925672944,0.0600784873349982,0.444903581267218,0.758911211924822
+"11","Rucker mean (JK) - steiger","ks_ivw_after_steiger","homosc_ivw_after_steiger","Qdiff_after_steiger",0.212626646652308,0.0579379236532287,0.0598896769109535,0.206096752816435
+"12","Rucker mean (JK) - tophits","Qdiff","Qdiff_after_steiger","ks_egger_after_steiger",0.110421890214434,0.0129860863360685,0.134969325153374,0.150724637681159
+"13","Rucker median (JK) - steiger","ks_ivw_after_steiger","homosc_ivw_after_steiger","homosc_egg_after_steiger",0.204620112463052,0.0521584017124509,0.0893371757925072,0.300073909830007
+"14","Rucker median (JK) - tophits","Qdiff","ks_egger_after_steiger","ks_ivw_after_steiger",0.110766002622856,0.0112022832679272,0.0607142857142857,0.0897009966777409
+"15","Rucker point estimate - steiger","homosc_ivw_after_steiger","ks_ivw_after_steiger","homosc_egg_after_steiger",0.208076413546462,0.0216910453085979,0.118251928020566,0.421441774491682
+"16","Rucker point estimate - tophits","ks_ivw_after_steiger","Qdiff","Qdiff_after_steiger",0.10256780442853,0.00599357830895469,0.132867132867133,0.1375
+"17","Simple median - steiger","shap_ivw_after_steiger","ks_ivw_after_steiger","shap_egger_after_steiger",0.081921600451318,0.00767035319300749,0.428571428571429,0.641025641025641
+"18","Simple median - tophits","ks_egger","ks_ivw","Qdiff",0.114935325560342,0.00692115590438816,0.6875,0.832402234636871
+"19","Simple mode (NOME) - steiger","shap_ivw_after_steiger","shap_egger_after_steiger","ks_ivw_after_steiger",0.0377291017510397,0.125579735997146,0.257289879931389,0.482599322451494
+"20","Simple mode (NOME) - tophits","st_correct","shap_ivw_after_steiger","ks_ivw_after_steiger",0.100072937146097,0.0230824117017481,0.26517571884984,0.636209813874788
+"21","Simple mode - steiger","shap_ivw_after_steiger","shap_egger_after_steiger","ks_ivw_after_steiger",0.0372457684048748,0.124652158401712,0.262472885032538,0.488364877443376
+"22","Simple mode - tophits","st_correct","shap_ivw_after_steiger","ks_ivw_after_steiger",0.103728570895678,0.0206207634677132,0.302931596091205,0.601145038167939
+"23","Weighted median - steiger","shap_egger_after_steiger","homosc_ivw_after_steiger","shap_ivw_after_steiger",0.0794548499488208,0.0420620763467713,0.393617021276596,0.707362534948742
+"24","Weighted median - tophits","shap_egger_after_steiger","homosc_ivw_after_steiger","shap_ivw_after_steiger",0.0975005007676004,0.034141990724224,0.437185929648241,0.776376146788991
+"25","Weighted mode (NOME) - steiger","shap_ivw_after_steiger","ks_ivw_after_steiger","shap_egger_after_steiger",0.0695000626359666,0.0827327863003924,0.322299651567944,0.651680075721723
+"26","Weighted mode (NOME) - tophits","ks_ivw_after_steiger","st_correct","ks_egger",0.107160428364341,0.0264359614698537,0.36697247706422,0.705970149253731
+"27","Weighted mode - steiger","shap_ivw_after_steiger","shap_egger_after_steiger","ks_ivw_after_steiger",0.0414222372650027,0.1027827327863,0.326086956521739,0.635124905374716
+"28","Weighted mode - tophits","st_correct","ks_ivw_after_steiger","shap_ivw_after_steiger",0.081570947830634,0.030467356403853,0.415789473684211,0.737516005121639
