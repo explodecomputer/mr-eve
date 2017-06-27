@@ -80,7 +80,7 @@
   \preauthor{}\postauthor{}
   \predate{\centering\large\emph}
   \postdate{\par}
-  \date{26 June 2017}
+  \date{27 June 2017}
 
 \begin{document}
 \maketitle
@@ -475,7 +475,8 @@ is
 \end{cases}
 \]
 
-\subsubsection{Graph database}\label{graph-database}
+\subsubsection{Graph database of MR
+estimates}\label{graph-database-of-mr-estimates}
 
 The set of MR estimates obtained from this analysis are recorded in a
 Neo4j graph database. Because each association has up to 28 different
@@ -508,15 +509,34 @@ sensitivity analyses are scrutinised and reported.
 \subsubsection{Steiger filtering improves
 reliability}\label{steiger-filtering-improves-reliability}
 
+We evaluated the efficacy of the Steiger filtering approach for
+improving MR reliability using 200,000 simulated datasets for in which
+there were varying null and non-null causal relationships, as well as
+varying degrees of instrument strength, sample size and forms of
+horizontal pleiotropy. Compared to
+
 \subsubsection{Mixture of experts method selection improves over any
 single
 method}\label{mixture-of-experts-method-selection-improves-over-any-single-method}
 
-Number of associations using different approaches Which methods were
-preferentially chosen
+The gating function for the mixture of experts model was trained by
+generating a different random forest independently for each of the 28 MR
+approaches, using a random two-thirds of the simulated datasets. The
+prediction accuracy of the performance for each of these methods is
+shown in table X, estimated using the remaining third of datasets. The
+dataset characteristics with the most importance for each of the
+predictors is also shown, as well as the frequency for which each of the
+methods was selected in the testing datasets.
 
 \subsubsection{A first draft of the causal map of the human
 phenome}\label{a-first-draft-of-the-causal-map-of-the-human-phenome}
+
+It is important to note that though the gating function should be
+applicable to datasets of any distribution of characteristics, the
+frequencies of chosen methods are relative to the characteristics of the
+simulated datasets, and would not necessarily be the same frequencies
+observed empirically. Applying the MoE model to the X number of MR
+associations for which there was sufficient data, we found that
 
 How many associations reach nominal or FDR corrected significance How
 many bi-directional associations How many associations could be declared
@@ -545,7 +565,20 @@ for a causal chain of 2
   Further developments required to improve causal estimates
 \item
   The use of causal chains to improve power
+\item
+  Repository will continually update - need to time stamp and provide
+  access to older associations
 \end{itemize}
+
+\subsection{Figures}\label{figures}
+
+\newpage
+
+\includegraphics{images/fig1.pdf}
+
+\newpage
+
+\includegraphics{images/fig2.pdf}
 
 \subsection*{References}\label{references}
 \addcontentsline{toc}{subsection}{References}

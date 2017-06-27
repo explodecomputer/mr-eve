@@ -227,5 +227,15 @@ How many associations could be declared for a causal chain of 2
 - Repository will continually update - need to time stamp and provide access to older associations
 
 
+## Figures
+
+\newpage
+
+![](images/fig1.pdf)
+
+\newpage
+
+![](images/fig2.pdf)
+
 ## References
 
