@@ -5,7 +5,7 @@
 #PBS -e job_reports/mr-error
 #PBS -l walltime=12:00:00
 #PBS -t 1-724
-#PBS -l nodes=1:ppn=1
+#PBS -l nodes=1:ppn=2
 #PBS -S /bin/bash
 
 set -e
@@ -21,5 +21,5 @@ i=${PBS_ARRAYID}
 
 cd ${HOME}/repo/mr-eve/scripts
 
-Rscript 04-perform_mr.r ${i}
+Rscript 05-perform_mr.r ${i}
 

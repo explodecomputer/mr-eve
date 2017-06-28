@@ -29,6 +29,32 @@ need two files
 
 
 
+neo4j
+
+to run in background:
+
+docker run -d --publish=7474:7474 --volume=$HOME/neo4j/data:/data neo4j:2.3
+docker exec -i -t neo4j:2.3 /bin/bash
+
+
+./neo4j-import \
+--into mr-eve.db \
+--id-type string \
+--nodes:gene ../data/upload/genes.csv \
+--nodes:snp ../data/upload/snps.csv \
+--nodes:trait ../data/upload/traits.csv \
+--relationships:GS ../data/upload/gene_snp.csv \
+--relationships:GA ../data/upload/snp_trait.csv \
+--relationships:MR ../data/upload/trait_trait.csv
+
+
+
+
+
+
+
+
+
 
 
 the paper
