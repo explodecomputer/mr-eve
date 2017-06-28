@@ -5,10 +5,6 @@
 library(tidyverse)
 library(TwoSampleMR)
 library(MRInstruments)
-data(metab_qtls)
-
-metab_qtls <- format_metab_qtls(metab_qtls)
-
 
 ## Soma scan proteins
 
@@ -29,29 +25,7 @@ soma <- format_data(
 )
 
 
-## Extract Shin QTLs
-
-shin <- read_csv("../data/shin_metab.csv")
-shin <- shin %>% separate("Effect (SE)", c("beta", "se"), sep=" \\(")
-shin$se <- gsub(")", "", shin$se) %>% as.numeric
-shin$beta <- as.numeric(shin$beta)
-shin <- shin %>% separate("EA/OA1", c("ea", "nea"), sep="/")
-
-shin <- format_data(
-	shin,
-	snp_col = "SNP",
-	effect_allele_col = "ea",
-	other_allele_col = "nea",
-	eaf_col = "EAF2",
-	phenotype_col = "Biochemical(s)",
-	beta_col = "beta",
-	se_col = "se",
-	pval_col = "P-value",
-	samplesize_col = "N"
-)
-
-
-load("../results/01/outcome_nodes.rdata")
+load("../results/02/nodes.rdata")
 
 try_extract_instrument <- function(id, pval, tries=3)
 {
@@ -67,24 +41,35 @@ try_extract_instrument <- function(id, pval, tries=3)
 	return(out)
 }
 
+nodes$type <- NA
+ao <- available_outcomes()
 
 l <- list()
 for(i in 1:nrow(nodes))
 {
-	temp <- try_extract_instrument(nodes$id[i])
-	if(!class(temp) == 'try-error' & !is.null(temp))
-	{
-		temp$id.exposure <- nodes$id[i]
-		l[[i]] <- filter(temp, mr_keep.exposure) %>%
-			select(id.exposure, SNP, effect_allele.exposure, other_allele.exposure, eaf.exposure, beta.exposure, se.exposure, pval.exposure, samplesize.exposure, ncase.exposure, ncontrol.exposure)
+	message(i)
+	if(nodes$id[i] %in% ao$id)
+	{	
+		temp <- try_extract_instrument(nodes$id[i], 5e-8)
+		if(!class(temp) == 'try-error' & !is.null(temp))
+		{
+			temp$id.exposure <- nodes$id[i]
+			temp$exposure <- nodes$trait[i]
+			nodes$type[i] <- "eo"
+			l[[i]] <- filter(temp, mr_keep.exposure) %>%
+				select(id.exposure, SNP, effect_allele.exposure, other_allele.exposure, eaf.exposure, beta.exposure, se.exposure, pval.exposure, samplesize.exposure, ncase.exposure, ncontrol.exposure)
+		} else {
+			nodes$type[i] <- "o"
+		}
+	} else {
+		nodes$type[i] <- "e"
 	}
 }
 
 e <- bind_rows(l)
-exposure_dat <- plyr::rbind.fill(e, shin, soma, metab_qtls)
+exposure_dat <- plyr::rbind.fill(e, soma)
 exposure_dat <- subset(exposure_dat, pval.exposure < 5e-8 & mr_keep.exposure)
 
-save(exposure_dat, file="../results/01/exposure_dat.rdata")
-
-
+save(nodes, file="../results/02/nodes.rdata")
+save(exposure_dat, file="../results/02/exposure_dat.rdata")
 

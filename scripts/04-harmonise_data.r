@@ -79,8 +79,10 @@ for(i in 1:nrow(outcome_nodes))
 {
 	message(i, ": ", outcome_nodes$id[i])
 	load(paste0("../data/results/01/interim-", outcome_nodes$id[i], ".rdata"))
-	d <- harmonise_data(exposure_dat, temp)
-	d <- merge(d, subset(exposure_dat, select=c(id.exposure, SNP, rsq.exposure)), by=c("id.exposure", "SNP"))
+	temp$other_allele.outcome[temp$other_allele.outcome == ""] <- NA
+	act <- ifelse(all(is.na(temp$other_allele.outcome)), 1, 2)
+	d <- suppressMessages(harmonise_data(exposure_dat, temp, action=act))
+	# d <- merge(d, subset(exposure_dat, select=c(id.exposure, SNP, rsq.exposure)), by=c("id.exposure", "SNP"))
 	d <- get_rsq(d, outcome_nodes$unit[i] == "log odds")
 
 	sexp <- d$samplesize.exposure

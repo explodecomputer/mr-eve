@@ -19,12 +19,10 @@ try_extract_outcome <- function(SNP, id, tries=3)
 
 ###
 
-ds <- "01"
+ds <- "02"
 
-load(paste0("../results/", ds, "/outcome_nodes.rdata"))
-# load(paste0("../results/", ds, "/exposure_dat.rdata"))
-
-load("../data/westra.rdata")
+load(paste0("../results/", ds, "/nodes.rdata"))
+load(paste0("../results/", ds, "/exposure_dat.rdata"))
 
 filt <- function(temp)
 {
@@ -33,13 +31,17 @@ filt <- function(temp)
 	return(temp)
 }
 
-snps <- unique(westra$SNP)
-for(i in 1:nrow(outcome_nodes))
+# load("../results/01/outcome_nodes.rdata")
+# load("../results/01/exposure_dat.rdata")
+
+snps <- unique(exposure_dat$SNP)
+# for(i in 1:nrow(nodes))
+for(i in 32)
 {
-	j <- outcome_nodes$id[i]
+	j <- nodes$id[i]
 	message(i," of ", nrow(outcome_nodes), ": ", j)
 	snpsneed <- snps
-	out <- paste0("../data/results/01/westra-", j, ".rdata")
+	out <- paste0("../data/results/02/interim/interim-", j, ".rdata")
 	if(file.exists(out))
 	{
 		message("Loading previous version")
@@ -57,5 +59,4 @@ for(i in 1:nrow(outcome_nodes))
 	}
 	save(temp, file=out)
 }
-
 

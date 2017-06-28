@@ -99,26 +99,87 @@ load("../results/01/outcome_nodes.rdata")
 load("../results/01/exposure_dat.rdata")
 
 exposure_nodes <- subset(exposure_dat, !duplicated(id.exposure))
-table(exposure_nodes$id.exposure %in% outcome_nodes)
 
-load("../results/01/extract.rdata")
-load("../results/01/mr.rdata")
+exposure_nodes <- dplyr::select(exposure_nodes,
+	trait=exposure,
+	id=id.exposure,
+	unit=units.exposure,
+	sample_size=samplesize.exposure,
+	ncase=ncase.exposure,
+	ncontrol=ncontrol.exposure
+)
+
+exposure_nodes <- subset(exposure_nodes, ! id %in% outcome_nodes$id)
+# ind1 <- exposure_nodes$trait %in% outcome_nodes$trait
+# ind <- match(exposure_nodes$trait[ind1], outcome_nodes$trait)
+# ind <- ind[!is.na(ind)]
+# exposure_nodes$id[ind1] <- outcome_nodes$id[ind]
+# exposure_nodes$trait[ind1] == outcome_nodes$trait[ind]
+# exposure_nodes$id[ind1] == outcome_nodes$id[ind]
+
+outcome_nodes$id <- as.character(outcome_nodes$id)
+nodes <- bind_rows(exposure_nodes, outcome_nodes)
+
+
+# table(exposure_nodes$id.exposure %in% outcome_nodes$id)
+# table(outcome_nodes$id %in% exposure_nodes$id.exposure)
+
+# temp <- subset(exposure_nodes, data_source.exposure == "Shin metabolites")
+# table(temp$exposure %in% outcome_nodes$trait)
+# subset(temp, ! exposure %in% outcome_nodes$trait)$exposure
+# subset(outcome_nodes, ! trait %in% exposure_nodes$exposure)$trait
+
+# a <- subset(outcome_nodes, author == "Shin")$id
+
+# r <- list()
+# for(i in 1:length(a))
+# {
+# 	message(i)
+# 	load(paste0("../results/01/mr/m1-", a[i], ".rdata"))
+# 	r[[i]] <- which(sapply(m1, function(x) nrow(subset(x$out, P < 1e-3 & round(Estimate, 1) == 1))) != 0)
+# }
+
+
+# b <- subset(exposure_nodes, data_source.exposure == "Shin metabolites")$exposure
+# a <- a[! a %in% b]
+# b <- b[! b %in% a]
+
+# table(outcome_nodes$author)
+
+# a <- subset(outcome_nodes, author == "Kettunen")$trait
+# b <- subset(exposure_nodes, data_source.exposure == "Kettunen metabolites")$exposure
+# a <- a[! a %in% b]
+# b <- b[! b %in% a]
+
+# table(b %in% a)
+
+# pmatch(toupper(b[1]), toupper(a))
+
+
+# table(outcome_nodes$trait %in% exposure_dat$exposure)
+
+# load("../results/01/extract.rdata")
+# load("../results/01/mr.rdata")
+
+
+
 
 ## Traits
 names(nodes)[names(nodes) == "trait"] <- "name"
-nodes <- modify_node_headers_for_neo4j(nodes, "id", "trait")
-write.csv(nodes, file="../results/01/upload/traits.csv", row.names=FALSE, na="")
+nodes_out <- modify_node_headers_for_neo4j(nodes, "id", "trait")
+write.csv(nodes_out, file="../results/01/upload/traits.csv", row.names=FALSE, na="")
 
 
 ## SNPs and genes
-snp_trait <- bind_rows(l) %>% as_data_frame() %>% filter(!duplicated(SNP))
+# snp_trait <- exposure_dat %>% filter(!duplicated(SNP))
+snp_trait <- exposure_dat
 
 snps <- ucsc_get_position(unique(snp_trait$SNP))
 snps <- subset(snps, !duplicated(name)) %>% 
 	dplyr::select(name=name, chr=chrom, pos=chromStart, alleles=alleles, alleleFreqs=alleleFreqs, ucsc_func=func) %>% as_data_frame
 snps <- bind_rows(snps, data.frame(name=unique(subset(snp_trait, !SNP %in% snps$name)$SNP)))
 snps$id <- 1:nrow(snps)
-snp_trait <- inner_join(snp_trait, dplyr::select(snps, SNP=name, snp_id=id), by="SNP")
+snp_trait <- left_join(snp_trait, dplyr::select(snps, SNP=name, snp_id=id), by="SNP")
 
 
 gene_snp <- get_gene(subset(snps, !is.na(chr)), "chr", "pos")
@@ -151,21 +212,14 @@ write.csv(snp_trait, file="../results/01/upload/snp_trait.csv", row.names=FALSE,
 
 ## trait-trait
 
-m1 <- bind_rows(m1) %>% 
-	ungroup %>% 
-	dplyr::select(-exposure, -outcome) %>%
-	modify_rel_headers_for_neo4j("id.exposure", "trait", "id.outcome", "trait")
-
-m2 <- bind_rows(m2) %>% 
-	ungroup %>% 
-	dplyr::select(-exposure, -outcome) %>%
-	modify_rel_headers_for_neo4j("id.exposure", "trait", "id.outcome", "trait")
-
-m1$instruments <- "All"
-m2$instruments <- "Steiger"
-m12 <- bind_rows(m1, m2)
-write.csv(m12, "../results/01/upload/trait_trait.csv", row.names=FALSE, na="")
-
+for(i in 1:8)
+{
+	message(i)
+	load(paste0("../results/01/mr/mc-", i, ".rdata"))
+	m <- bind_rows(a$m)
+	m <- modify_rel_headers_for_neo4j(m, "id.exposure", "trait", "id.outcome", "trait")
+	write.csv(m, paste0("../results/01/upload/trait_trait-", i, ".csv"), row.names=FALSE, na="")
+}
 
 cmd <- paste0(
 "~/neo4j-community-3.2.0/bin/neo4j-admin import", 

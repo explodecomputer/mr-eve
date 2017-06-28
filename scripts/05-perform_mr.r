@@ -1,3 +1,4 @@
+# devtools::install_github("MRCIEU/TwoSampleMR@mr_structure")
 library(TwoSampleMR)
 library(tidyverse)
 library(randomForest)
@@ -85,13 +86,11 @@ system_metrics <- function(dat)
 	return(metrics)
 }
 
-
-
 get_metrics <- function(dat)
 {
 	metrics <- system_metrics(dat)
 	# Steiger
-	steiger_keep <- dat$steiger_dir & dat$steiger_pval < 0.05
+	steiger_keep <- dat$steiger_dir
 	metrics$st_correct <- sum(steiger_keep) / nrow(dat)
 	metrics$st_unknown <- sum(dat$steiger_pval < 0.05) / nrow(dat)
 	metrics$st_incorrect <-  sum(!dat$steiger_dir & dat$steiger_pval < 0.05) / nrow(dat)
@@ -142,7 +141,7 @@ get_rf_method <- function(m1, m2, d, rf)
 			}
 			pr <- tibble(pr=pr, Method=nom)
 			res <- left_join(res, pr, by="Method")
-			ress <- res[which.max(res$pr), ]
+			ress <- res[which.max(res$pr)[1], ]
 			n[[j]] <- tibble(id.exposure=id.e, id.outcome=id.o, exposure=e, outcome=o, selected_method=ress$Method)
 			ress$Method <- "RF"
 			l[[j]] <- rbind(res, ress)
@@ -153,18 +152,28 @@ get_rf_method <- function(m1, m2, d, rf)
 	return(l)
 }
 
-load("~/repo/instrument-directionality/results/rf.rdata")
+
 
 ds <- "01"
 
 load(paste0("../results/", ds, "/outcome_nodes.rdata"))
 load(paste0("../results/", ds, "/exposure_dat.rdata"))
+load("~/repo/instrument-directionality/results/rf.rdata")
+
 
 i <- as.numeric(commandArgs(T)[1])
 
 load(paste0("../results/01/dat/dat-", outcome_nodes$id[i], ".rdata"))
-load(paste0("../results/01/mr/m1-", outcome_nodes$id[i], ".rdata"))
-load(paste0("../results/01/mr/m2-", outcome_nodes$id[i], ".rdata"))
+d$outcome <- outcome_nodes$trait[i]
 
+
+a <- subset(d, id.exposure == 2)
+run_mr(a)
+
+m1 <- run_mr(subset(d, id.exposure != id.outcome))
+save(m1, file=paste0("../results/01/mr/m1-", outcome_nodes$id[i], ".rdata"))
+m2 <- run_mr(subset(d, id.exposure != id.outcome & steiger_dir))
+save(m2, file=paste0("../results/01/mr/m2-", outcome_nodes$id[i], ".rdata"))
 m3 <- get_rf_method(m1, m2, d, rf)
 save(m3, file=paste0("../results/01/mr/m3-", outcome_nodes$id[i], ".rdata"))
+
