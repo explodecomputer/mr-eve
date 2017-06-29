@@ -158,7 +158,6 @@ ds <- "01"
 
 load(paste0("../results/", ds, "/outcome_nodes.rdata"))
 load(paste0("../results/", ds, "/exposure_dat.rdata"))
-load("~/repo/instrument-directionality/results/rf.rdata")
 
 
 i <- as.numeric(commandArgs(T)[1])
@@ -166,14 +165,30 @@ i <- as.numeric(commandArgs(T)[1])
 load(paste0("../results/01/dat/dat-", outcome_nodes$id[i], ".rdata"))
 d$outcome <- outcome_nodes$trait[i]
 
+message(i, ": ", outcome_nodes$id[i])
 
-a <- subset(d, id.exposure == 2)
-run_mr(a)
+if(file.exists(paste0("../results/01/mr/m1-", outcome_nodes$id[i], ".rdata")))
+{
+	load(paste0("../results/01/mr/m1-", outcome_nodes$id[i], ".rdata"))
+} else {
+	m1 <- run_mr(subset(d, id.exposure != id.outcome))
+	save(m1, file=paste0("../results/01/mr/m1-", outcome_nodes$id[i], ".rdata"))
+}
 
-m1 <- run_mr(subset(d, id.exposure != id.outcome))
-save(m1, file=paste0("../results/01/mr/m1-", outcome_nodes$id[i], ".rdata"))
-m2 <- run_mr(subset(d, id.exposure != id.outcome & steiger_dir))
-save(m2, file=paste0("../results/01/mr/m2-", outcome_nodes$id[i], ".rdata"))
-m3 <- get_rf_method(m1, m2, d, rf)
-save(m3, file=paste0("../results/01/mr/m3-", outcome_nodes$id[i], ".rdata"))
+if(file.exists(paste0("../results/01/mr/m2-", outcome_nodes$id[i], ".rdata")))
+{
+	load(paste0("../results/01/mr/m2-", outcome_nodes$id[i], ".rdata"))
+} else {
+	m2 <- run_mr(subset(d, id.exposure != id.outcome & steiger_dir))
+	save(m2, file=paste0("../results/01/mr/m2-", outcome_nodes$id[i], ".rdata"))
+}
+
+if(file.exists(paste0("../results/01/mr/m3-", outcome_nodes$id[i], ".rdata")))
+{
+	load(paste0("../results/01/mr/m3-", outcome_nodes$id[i], ".rdata"))
+} else {
+	load("~/repo/instrument-directionality/results/rf.rdata")
+	m3 <- get_rf_method(m1, m2, d, rf)
+	save(m3, file=paste0("../results/01/mr/m3-", outcome_nodes$id[i], ".rdata"))
+}
 
