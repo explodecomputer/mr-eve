@@ -176,9 +176,9 @@ snp_trait <- exposure_dat
 
 snps <- ucsc_get_position(unique(snp_trait$SNP))
 snps <- subset(snps, !duplicated(name)) %>% 
-	dplyr::select(name=name, chr=chrom, pos=chromStart, alleles=alleles, alleleFreqs=alleleFreqs, ucsc_func=func) %>% as_data_frame
+	dplyr::select(name=name, chr=chrom, pos=chromStart, ucsc_func=func) %>% as_data_frame
 snps <- bind_rows(snps, data.frame(name=unique(subset(snp_trait, !SNP %in% snps$name)$SNP)))
-snps$id <- 1:nrow(snps)
+snps$id <- snps$name
 snp_trait <- left_join(snp_trait, dplyr::select(snps, SNP=name, snp_id=id), by="SNP")
 
 
@@ -212,13 +212,25 @@ write.csv(snp_trait, file="../results/01/upload/snp_trait.csv", row.names=FALSE,
 
 ## trait-trait
 
-for(i in 1:8)
+ntt <- 8
+
+for(i in 5:ntt)
 {
 	message(i)
 	load(paste0("../results/01/mr/mc-", i, ".rdata"))
+
 	m <- bind_rows(a$m)
 	m <- modify_rel_headers_for_neo4j(m, "id.exposure", "trait", "id.outcome", "trait")
-	write.csv(m, paste0("../results/01/upload/trait_trait-", i, ".csv"), row.names=FALSE, na="")
+	write.csv(m, paste0("../results/01/upload/trait_trait-", i, ".csv"), row.names=FALSE, na="", col.names=i == 1)
+
+	mb <- bind_rows(a$mb)
+	mb <- modify_rel_headers_for_neo4j(mb, "id.exposure", "trait", "id.outcome", "trait")
+	write.csv(mb, paste0("../results/01/upload/trait_trait_sel-", i, ".csv"), row.names=FALSE, na="", col.names=i == 1)
+
+	# so <- bind_rows(a$so)
+	# names(so) <- c("SNP", "beta", "se", "pval", "samplesize", "effect_allele", "other_allele", "id")
+	# so <- modify_rel_headers_for_neo4j(so, "SNP", "snp", "id", "trait")
+	# write.csv(so, paste0("../results/01/upload/so-", i, ".csv"), row.names=FALSE, na=")
 }
 
 cmd <- paste0(
