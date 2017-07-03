@@ -89,7 +89,7 @@ for(i in 1:nrow(outcome_nodes))
 	sexp[is.na(d$samplesize.exposure)] <- 1000000
 	sout <- d$samplesize.outcome
 	sout[is.na(d$samplesize.outcome)] <- 1000000
-	st <- psych::r.test(n = sexp, n2 = sout, r12 = d$rsq.exposure, r34 = d$rsq.outcome)
+	st <- psych::r.test(n = sexp, n2 = sout, r12 = sqrt(d$rsq.exposure) * sign(d$beta.exposure), r34 = sqrt(d$rsq.outcome) * sign(d$beta.outcome))
 
 	d$steiger_dir <- as.logical(sign(st$z))
 	d$steiger_pval <- st$p
