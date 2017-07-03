@@ -50,6 +50,8 @@ RUN chown docker /var/log/shiny-server
 # Copy app across
 # e.g. git clone git@github.com:explodecomputer/mr-eve.git && cd mr-eve/shiny/ && docker build -t mr-eve-shiny .
 
+RUN sudo su - -c "R -e \"install.packages(c('shinydashboard'))\""
+
 RUN rm -r /srv/shiny-server/*
 COPY . /srv/shiny-server/
 
