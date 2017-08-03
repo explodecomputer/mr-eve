@@ -24,7 +24,7 @@
 \usepackage[margin=1in]{geometry}
 \usepackage{hyperref}
 \hypersetup{unicode=true,
-            pdftitle={Learning pleiotropic signatures to construct a causal map of the human phenome},
+            pdftitle={A putative causal map of natural variation across the human phenome},
             pdfborder={0 0 0},
             breaklinks=true}
 \urlstyle{same}  % don't use monospace font for urls
@@ -56,7 +56,6 @@
 \let\oldsubparagraph\subparagraph
 \renewcommand{\subparagraph}[1]{\oldsubparagraph{#1}\mbox{}}
 \fi
-\usepackage{amsmath}
 
 %%% Use protect on footnotes to avoid problems with footnotes in titles
 \let\rmarkdownfootnote\footnote%
@@ -73,15 +72,16 @@
 }
 
 \setlength{\droptitle}{-2em}
-  \title{Learning pleiotropic signatures to construct a causal map of the human
-phenome}
+  \title{A putative causal map of natural variation across the human phenome}
   \pretitle{\vspace{\droptitle}\centering\huge}
   \posttitle{\par}
   \author{}
   \preauthor{}\postauthor{}
   \predate{\centering\large\emph}
   \postdate{\par}
-  \date{02 August 2017}
+  \date{03 August 2017}
+
+\usepackage{amsmath}
 
 \begin{document}
 \maketitle
@@ -114,21 +114,21 @@ the emerging field of causal inference using Mendelian randomization
 using only summary level data. MR depends on SNPs exhibiting vertical
 pleiotropy, where the SNP influences an outcome phenotype only through
 an exposure phenotype. Issues arise when this assumption is violated due
-to SNPs exhibiting horizontal pleiotropy, and many methods have been
-developed in an attempt to address this, each assuming a different model
-of horizontal pleiotropy. Here we show that across a range of horizontal
-pleiotropy models instrument selection will be increasingly liable to
-selecting invalid instruments as GWAS sample sizes continue to grow. We
-have integrated these methods into a mixture-of-experts machine learning
-approach (MR-MoE 1.0) that predicts the most appropriate model to use
-for any specific causal analysis, improving on both power and false
-discovery rates. Using the approach, we systematically estimated the
-causal effects amongst 2407 phenotypes, generating a working draft of
-the causal map of the human phenome, comprising the evaluation of
-causality between over a million pairs of traits. Almost 90\% of causal
-estimates indicated some level of horizontal pleiotropy. The causal
-estimates are organised into a publicly available graph database
-(\url{http://eve.mrbase.org}).
+to SNPs exhibiting horizontal pleiotropy. We demonstrate that across a
+range of pleiotropy models, instrument selection will be increasingly
+liable to selecting invalid instruments as GWAS sample sizes continue to
+grow. Methods have been developed in an attempt to protect MR from
+different patterns of horizontal pleiotropy, and here we have designed a
+mixture-of-experts machine learning framework (MR-MoE 1.0) that predicts
+the most appropriate model to use for any specific causal analysis,
+improving on both power and false discovery rates. Using the approach,
+we systematically estimated the causal effects amongst 2407 phenotypes,
+comprising the evaluation of causality between over a million pairs of
+traits. Almost 90\% of causal estimates indicated some level of
+horizontal pleiotropy. The causal estimates are organised into a
+publicly available graph database (\url{http://eve.mrbase.org}), and we
+use it here to highlight the numerous challenges that remain in
+automated causal inference.
 
 \subsection{Introduction}\label{introduction}
 
@@ -169,82 +169,85 @@ understood prism of a meta-analysis.
 
 Problems with obtaining unbiased causal effects can arise, however, if
 the genetic instruments exhibit horizontal pleiotropy (HP), where they
-influence the outcome through a pathway other than the exposure (2). The
-extent of this phenomenon is not to be understated, and many methods
+influence the outcome through a pathway other than the exposure (Box 1).
+The extent of this phenomenon is not to be understated, and many methods
 have been developed that attempt to reliably obtain unbiased causal
 estimates under specific models of HP (4--7,9,13). It is considered best
-practice to report estimates from a range of methods as a sensitivity
-analysis when presenting causal estimates so as to assess the potential
-for different horizontal pleiotropy models and other violations of MR
-assumptions. However it is also desirable to consolidate across methods
-under some circumstances. First, it could be of interest to screen links
+practice to triangulate estimates from a range of MR methods (and other
+experimental designs) when presenting causal estimates so as to assess
+the potential for different horizontal pleiotropy models and other
+violations of MR assumptions (14). However there are circumstances in
+which it is desirable to consolidate across many methods to obtain a
+single MR estimate. First, it could be of interest to screen links
 between thousands of traits for being potential causal associations, in
 which case a critical evaluation of each causal estimate of interest may
 not be possible or convenient. Second, though the simplest method, based
 on inverse-variance weighted (IVW) meta analysis (11), is most
 statistically powerful under no HP, it can have high false positive or
 low true positive rates in the presence of HP compared to other methods.
-Pleiotropy has been hypothesised to be universal (14), though the degree
-and nature (e.g.~horizontal versus vertical) to which this may be the
-case is contested (15,16), hence defaulting to the IVW method in the
-first instance and using other methods as sensitivity analyses may not
-be appropriate. Third, if different methods disagree it is not possible
-to know which is correct because the true nature of HP exhibited by the
-instruments is not known. Fourth, the available methods do not cover all
-possible models of HP, and therefore an automated method for instrument
-selection may be necessary.
+Pleiotropy has been hypothesised to be universal (15), though the degree
+and nature (e.g.~horizontal versus vertical, see Box 1) to which this
+may be the case is contested (16,17), hence defaulting to the IVW method
+in the first instance and using other methods as sensitivity analyses
+may not be appropriate. Third, if different methods disagree it is not
+possible to know which is correct because the true nature of HP
+exhibited by the instruments is not known. Fourth, the available methods
+do not cover all possible models of HP, and therefore an automated
+method for instrument selection may be necessary.
 
 In this paper we introduce two innovations towards improving the
-reliability of MR estimates. First, we introduce an approach to discard
+reliability of MR estimates. First, we present an approach to discard
 genetic variants that are likely to be invalid. Second, we hypothesised
 that characteristics of the summary data could indicate which method
 would be most reliable, and we introduce new machine learning approaches
 that attempt to automate both instrument and method selection. Using
 curated GWAS summary data for thousands of phenotypes (12), we use these
 new methods to construct a graph of millions of causal estimates.
-Motivated by the recent avalanche (17) of 2SMR publications, with
-similar (18,19) or contradicting (20,21) conclusions despite using the
-same data (17), we developed a graph database to represent these
+Motivated by the recent avalanche (18) of 2SMR publications, with
+similar (19,20) or contradicting (21,22) conclusions despite using the
+same data (18), we developed a graph database to represent these
 estimates in a consistent manner. We consider this to be a `working
 draft' of the causal map of the human phenome, but raise caution
 throughout that its interpretation is far from straightforward, and that
 future corrections and refinements will inevitably follow as data grows
 and 2SMR methods evolve.
 
-\subsubsection{Box 1: Models of
-pleiotropy}\label{box-1-models-of-pleiotropy}
+\subsubsection{Box 1: Pleiotropic
+mechanisms}\label{box-1-pleiotropic-mechanisms}
 
-In this paper we separate pleiotropy into two forms for simplicity -
-vertical and horizontal. Vertical pleiotropy has also been known as
-mediated pleiotropy (22), because the genetic variant influences one
-trait, which in turn influences a second trait. It has also been termed
-Type II pleiotropy (15) and secondary pleiotropy (23).
+Pleiotropy is the phenomenon whereby a single genetic variant influences
+multiple phenotypes. The mechanisms behind it can arise through many
+different mechanisms, for example a single variant influences multiple
+genes; a single gene generates multiple gene products; a single gene
+product has multiple cellular functions; or a single cellular function
+influences multiple phenotypes (23). How we classify the pleiotropic
+mechanism depends on the application, and in this paper we discuss
+pleiotropy in two forms - vertical and horizontal. Vertical pleiotropy
+has also been known as mediated pleiotropy (24), because the genetic
+variant influences one trait, which in turn influences a second trait.
+It has also been termed, in some contexts, Type II pleiotropy (16) and
+secondary pleiotropy (25). It is this form of pleiotropy that MR assumes
+to make causal inference between two traits.
 
 By contrast, horizontal pleiotropy can manifest in a myriad of different
-ways, but the guiding principle is that the genetic variant influences
-two different phenotypes through independent pathways. Horizontal
-pleiotropy has also been termed biological pleiotropy (22), Type I
-pleiotropy (15), developmental pleiotropy or selectional pleiotropy
-(24). From a MR statistical perspective, one can be more specific and
-state that horizontal pleiotropy occurs where a SNP influences an
-outcome trait through some pathway other than the exposure trait.
+ways, but the basic principle is that the genetic variant influences two
+different phenotypes through independent pathways. Depending on context,
+horizontal pleiotropy can also be termed biological pleiotropy (24),
+Type I pleiotropy (16), developmental pleiotropy or selectional
+pleiotropy (26). From the perspective of MR, horizontal pleiotropy
+arises when a SNP influences an outcome trait through some pathway other
+than the exposure trait.
 
-For illustration, Hu et al (2016) (Figure 3) enumerate the biological
-mechanisms that can lead to pleiotropy: a single variant influences
-multiple genes; a single gene generates multiple gene products; a single
-gene product has multiple cellular functions; or a single cellular
-function influences multiple phenotypes (25). Whether we consider each
-of these mechanisms to be vertical pleiotropy (advantageous for MR) or
-horizontal pleiotropy (problematic for MR) depends on which phenotypes
-are being interrogated. For example, consider a scenario where a SNP
-influences the expression levels of two genes, and the first gene
-influences trait A while the second gene influences trait B. Then:
+A genetic variant can exhibit both horizontal and vertical pleiotropy in
+different MR analyses. For example, consider a scenario where a SNP
+influences the expression levels of two genes (X and Y), and gene X
+influences trait A while gene Y influences trait B. Then:
 
 \begin{itemize}
 \tightlist
 \item
   The genetic variant is exhibiting a vertical pleiotropic effect on
-  trait A through the first gene expression level. Here, all other
+  trait A and the expression level of gene X. Here, all other
   assumptions being met, the genetic variant would be a valid instrument
   if used to estimate the causal effect of the gene expression level on
   trait A. However,
@@ -255,13 +258,17 @@ influences trait A while the second gene influences trait B. Then:
   trait A on trait B.
 \end{itemize}
 
+\includegraphics{images/pleiotropy.png}
+
+Adapted from Figure 3 in Hu et al (2016).
+
 \subsection{Methods}\label{methods}
 
 \subsubsection{GWAS summary data and their use in
 2SMR}\label{gwas-summary-data-and-their-use-in-2smr}
 
 The use of summary data in two-sample MR is described in detail
-elsewhere (12,26). A brief outline of the procedure is as follows.
+elsewhere (12,27). A brief outline of the procedure is as follows.
 First, genetic instruments for the exposure trait need to be identified
 - those SNPs with \(p < 10^{-8}\) are retained in order to ensure that
 the first assumption of MR (that the instrument associates with the
@@ -317,7 +324,7 @@ accounted for overall directional HP (6), as long as the HP effects are
 not correlated with the SNP-exposure effects (also known as the INSIDE
 assumption)(4).
 
-The Rucker framework (27), adapted to MR (6) uses estimates of
+The Rucker framework (28), adapted to MR (6) uses estimates of
 heterogeneity in the IVW and Egger frameworks to navigate between these
 nested models. A jackknife approach (random selection with replacement
 of the complete set of instruments) can be used to obtain a sampling
@@ -334,7 +341,7 @@ fixed effects, Egger random effects) plus the three Rucker estimates
 seven mean based estimators.
 
 \textbf{Median-based methods:} An alternative approach is to take the
-median effect of all available instruments (5,28). This has the
+median effect of all available instruments (5,29). This has the
 advantage that only half the instruments need to be valid, and the
 estimate will remain unbiased. The weighted median estimate develops the
 approach further to allow stronger instruments to contribute more
@@ -345,7 +352,7 @@ penalising any instrument that contributes substantially towards the
 heterogeneity statistic. Together, this provides three median based
 estimators. Other estimation strategies not considered here, such as
 LASSO regression, have also been developed for the situation where at
-least half of the instruments are valid (29).
+least half of the instruments are valid (30).
 
 \textbf{Mode-based methods:} The mode based estimator clusters the
 instruments into groups based on similarity of causal effects, and
@@ -362,16 +369,16 @@ set to 1 by default.
 
 \paragraph{Top hits}\label{top-hits}
 
-The simplest approach to selecting instruments for performing MR is to
-take SNPs that have been declared significant in the published GWAS for
-the exposure. This typically involves obtaining SNPs that surpass
-\(p < 5 \times 10^{-8}\), using clumping to obtain independent SNPs, and
-then replicating in an independent sample. These results are often
-recorded in public GWAS catalogs. Alternatively the clumping procedure
-can be performed using complete summary data in MR-Base (12). Complete
-summary data refers to association results for all SNPs used in a GWAS
-i.e.~not only those passing statistical thresholds for significance. We
-call this the ``tophits'' strategy.
+The simplest approach to selecting instruments is to take SNPs that have
+been declared significant in the published GWAS for the exposure. This
+typically involves obtaining SNPs that surpass \(p < 5 \times 10^{-8}\),
+using clumping to obtain independent SNPs, and then replicating in an
+independent sample. These results are often recorded in public GWAS
+catalogs. Alternatively the clumping procedure can be performed using
+complete summary data in MR-Base (12). Complete summary data refers to
+association results for all SNPs used in a GWAS i.e.~not only those
+passing statistical thresholds for significance. We call this the
+``tophits'' strategy.
 
 \paragraph{Steiger filtering}\label{steiger-filtering}
 
@@ -403,19 +410,19 @@ simple inequality will not hold in some cases, for example
 \(\rho_{g,x}\) and \(\rho_{g,y}\) parameters, as has been discussed in
 detail previously (8). However, we use it here as a computationally
 inexpensive and approximate method to identify variants that are likely
-to be invalid. Steiger's Z-test of correlated correlations (30) can be
+to be invalid. Steiger's Z-test of correlated correlations (31) can be
 used to formally test the extent to which the two correlations are
 statistically different.
 
 Here we adapt this approach to automatically filter SNPs that are liable
 to be invalid (Figure 1a). Other methods have been developed to identify
 invalid instruments for the purposes of exclusion from MR analyses
-(9,13,31), based on the notion that outlying instruments are more likely
+(9,13,32), based on the notion that outlying instruments are more likely
 to be a source of HP. A potential drawback of this approach is that the
 outlier SNPs in a summary-set might be the only reliable ones. This
 could arise, for example, for the \emph{CRP} variant instrumenting
-C-reactive protein levels (20), or the \emph{SLC2A9} variant influencing
-serum urate levels (32).
+C-reactive protein levels (21), or the \emph{SLC2A9} variant influencing
+serum urate levels (33).
 
 To avoid this, we primarily developed Steiger filtering to identify
 those instruments that are likely to be arising due to reverse cause,
@@ -433,7 +440,7 @@ performs best for a different model of pleiotropy. Our objective is to
 select the method most likely to be correct for a specific MR analysis
 by predicting the model of pleiotropy, and relating that prediction to
 the most appropriate model. To achieve this we use a ``mixture of
-experts'' machine learning approach (33), where each MR method is
+experts'' machine learning approach (34), where each MR method is
 considered to be an `expert', taking a summary-set as its input. An
 overview of the approach is shown in Figure 2.
 
@@ -464,13 +471,13 @@ available at
 (12).
 
 It should be noted that in the original hierarchical mixture of experts
-approach of (33) the gating function and the experts share the same
+approach of (34) the gating function and the experts share the same
 input space and are trained simultaneously using
 expectation-maximisation. In our approach the gating function is defined
 over a separate input space consisting of the parameter space of the
 experts, and is trained separately in a supervised setting using
 simulated data. As such our MR-MoE approach fits the framework of
-meta-learning (34--36) where machine learning methods are applied at the
+meta-learning (35--37) where machine learning methods are applied at the
 `meta-level' to analyse the results of machine learning experiments at
 the `base-level', in order to be able to understand and model the
 capabilities of each expert and recommend which expert should be applied
@@ -582,8 +589,8 @@ rates (Figure 3a), including the MoE approach.
 phenotypes}\label{automated-mr-analysis-of-2407-phenotypes}
 
 We applied our analysis using summary data for 2407 phenotypes,
-including 149 complex traits and diseases, 575 metabolites (37,38) and
-1683 plasma protein levels (39). For the protein levels only GWAS
+including 149 complex traits and diseases, 575 metabolites (38,39) and
+1683 plasma protein levels (40). For the protein levels only GWAS
 significant hits were available, so they could only be evaluated as
 exposure phenotypes. The complex traits and diseases and metabolite
 levels had complete summary data available obtained via MR-Base, and
@@ -611,12 +618,12 @@ schooling}\label{putative-associations-involving-ldl-cholesterol-and-years-of-sc
 
 As an example of the database we performed a look up of associations
 between all traits and LDL cholesterol (as measured in the GLGC
-consortium (40)), where the MoE result had a false discovery rate of
+consortium (41)), where the MoE result had a false discovery rate of
 0.05 using the MoE approach. This returned 287 putative associations,
 amongst which 111 involved LDL cholesterol influencing other traits and
 176 involved other traits influencing LDL cholesterol. A large
 proportion of these traits were metabolites, which are dominated by
-lipid fractions. Filtering to exclude the metabolomic studies ((37,38))
+lipid fractions. Filtering to exclude the metabolomic studies ((38,39))
 returned 27 associations with 23 traits (Figure 4a). There was a strong
 association with coronary heart disease (0.41 log(OR) per SD, 0.31-0.52,
 \(p=2.7\times10^{-12}\)). Here the IVW random effects method was chosen
@@ -624,12 +631,12 @@ after Steiger filtering, indicating the presence of HP being present
 amongst the instruments.
 
 We also performed a look up of associations that causally influence
-years of schooling (41), or that years of schooling itself causally
+years of schooling (42), or that years of schooling itself causally
 influences. Using a false-discovery rate of 0.05, 45 traits were
 returned as having some direction of causality with years of schooling
 (Figure 4b). Several of these putative relationships appear to be
 plausible, for example the influence of years of schooling on lower risk
-of Alzheimer's disease, which has recently been reported (42). However,
+of Alzheimer's disease, which has recently been reported (43). However,
 it is clear that there are serious limitations in relying on MR as a
 panacea for causal inference. For example, bi-directional causal
 relationships with college completion exist because of the similarity in
@@ -650,112 +657,150 @@ everything vs everything (MR-EvE) web application,
 
 \subsection{Discussion}\label{discussion}
 
+Motivated by a recent flurry of activity in MR methodology development,
+we have devised a machine learning approach, MR-MoE, that seeks to
+predict the performance of each MR method, selecting the one which is
+most likely to maximise power whilst minimising FDR for a specific
+summary-set. The mixture of experts approach that we present here is
+trained using random forest decision trees applied to extensive and
+diverse simulations, and we demonstrate that it makes substantial
+performance improvements over any other single method in the presence or
+absence of extensive horizontal pleiotropy. As such, our method
+contributes to the field of meta-learning but also to the rapidly
+growing field of automatic model selection and hyper-parameter
+optimization in machine learning (44). We applied the method to the
+curated set of GWAS summary data present in MR-Base (12), generating
+several million MR estimates. MR-MoE selected a method that indicated
+some pattern of horizontal pleiotropy for almost 90\% of cases,
+reinforcing the notion that it is the rule rather than the exception.
+
 The trend of increasing GWAS sample sizes continues, but while the
 opportunity that this affords MR to be furnished with more instruments
 is typically welcomed, here we have shown that it is invalid
 instruments, exhibiting horizontal pleiotropy or reverse causation, that
 are more likely to be identified than valid ones. Strategising how MR is
 to be used in practice, therefore, must consider horizontal pleiotropy
-to be the rule rather than the exception. Following a recent flurry in
-development of MR methodology, we have devised a machine learning
-approach, MR-MoE, that seeks to predict the performance of each MR
-method, selecting the one which is most likely to maximise power whilst
-minimising FDR for a specific summary-set. The mixture of experts
-approach that we present here is trained using random forest decision
-trees applied to extensive and diverse simulations, and we demonstrate
-that it makes substantial performance improvements over any other single
-method in the presence or absence of extensive horizontal pleiotropy. As
-such, our method contributes to the field of meta-learning but also to
-the rapidly growing field of automatic model selection and
-hyper-parameter optimization in machine learning (43).
+to be the rule rather than the exception. Instrumental variables in MR
+are typically chosen blind, with GWAS significance being the only
+criterion. We illustrated how confounders and reverse causal
+associations can easily lead to invalid instrument selection in MR and
+that most randomly generated patterns of horizontal pleiotropy cannot be
+adequately accounted for by any single MR method.
 
-Crucially however, we observed in our simulations that none of the
-available methods were conservative and all, including MR-MoE, had FDR
-above 0.2. Instrumental variables in MR are typically chosen blind, with
-GWAS significance being the only criterion. We illustrated showed how
-confounders and reverse causal associations can easily lead to invalid
-instrument selection in MR and that most randomly generated patterns of
-horizontal pleiotropy cannot be adequately accounted for by any single
-MR method.
+Methods have been introduced recently that seek to improve MR estimates
+through invalid instrument detection and removal (9,13,32). These attack
+the problem from the perspective that variants which have a relatively
+large influence on the causal estimate, or provide substantially
+different estimates from the other variants, are likely to be exhibiting
+HP, and their removal from the analysis may be warranted. A potential
+drawback of this approach is that the outlier SNPs in a summary-set
+might be the only reliable ones. This could arise, for example, for the
+\emph{CRP} variant instrumenting C-reactive protein levels (21), because
+CRP itself is downstream of many cellular functions and most GWAS
+signals will not be specific for the trait. Steiger filtering has
+attempted to sidestep this issue in removing invalid instruments,
+seeking to detect those instruments which have associations with the
+outcome that are too large to be consistent with the exposure causing
+the outcome. We acknowledge that unmeasured confounding and measurement
+error can introduce problems with Steiger filtering (8), but note that
+our simulations indicate that all individual MR methods improve in
+performance following its application.
 
-We applied the method to the curated set of GWAS summary data present in
-MR-Base (12), generating several million MR estimates. MR-MoE selected a
-method that indicated some pattern of horizontal pleiotropy for almost
-90\% of cases, reinforcing the notion that it is the rule rather than
-the exception. Based on our simulations we expect that those
-associations that we reported to be `significant' are liable to high
-type 1 error rates.
-
-One advantage to generating a method that consolidates across many
-methods is that it can prevent cherry picking the most appealing method
-based on their results, but in general we strongly advocate the use of
-reporting multiple MR methods to appraise any specific the impact of HP
-on a causal estimate. In addition to HP, there are many other
-limitations that prevent MR from being a panacea for causal inference.
-Many of the associations are biologically impossible, for example where
-early life phenotypes appear to be influenced by later stage phenotypes.
-Such associations can be explained statistically because the instruments
-proxy the liability for that particular phenotype, not that phenotype's
-observed manifestation. Though these associations can be informative,
-their interpretations as causal relationships are far from clear.
-Similarly, often disease traits appear to causally relate to other
-phenotypes, but GWAS of disease is typically performed on the liability
-scale, hence the causal estimate reflects not the presence or absence of
-disease, but the underlying risk of disease. Again, interpretation of
-such associations can be problematic due to the instruments proxying
-disease liability and not diseae outcomes.
+In addition to HP, there are many other limitations that prevent MR from
+being a panacea for causal inference. Many of the associations are
+biologically impossible, for example where early life phenotypes appear
+to be influenced by later stage phenotypes. Such associations can be
+explained statistically because the instruments proxy the liability for
+that particular phenotype, not that phenotype's observed manifestation.
+Though these associations can be informative, their interpretations as
+causal relationships are far from clear. Similarly, often disease traits
+appear to causally relate to other phenotypes, but GWAS of disease is
+typically performed on the liability scale, hence the causal estimate
+reflects not the presence or absence of disease, but the underlying risk
+of disease. Again, interpretation of such associations can be
+problematic due to the instruments proxying disease liability and not
+diseae outcomes.
 
 A large proportion of the associations were estimated using only a
 single instrumental variable, a circumstance in which cause, reverse
 cause or horizontal pleiotropy cannot be immediately distinguished.
 Though methods are emerging to attempt to delineate between models of
 reverse cause, pleiotropy and multiple causal variants in the same
-region (44,45), separating vertical from horizontal pleiotropy with a
+region (45,46), separating vertical from horizontal pleiotropy with a
 single instrument is not yet possible in the two-sample MR framework
 though the use of mediation-based approaches may be informative in the
-one-sample setting (8,46). Other problems can also manifest. Frailty
-effects (47) could induce associations for late-onset traits, and often
-detailed modelling for how this can influence MR is warranted (42,48).
-Genetic variants could strongly relate to several phenotypes, for
-example SNPs that influence LDL cholesterol are also likely to influence
-other lipid fractions, making it difficult to ascertain which amongst
-them is the true causal exposure (49). The measured feature for which
-genetic associations are known could relate in complicated ways to the
-biological entities that is truly causal (2), for example higher
-circulating levels of the natural antioxidant extracellular superoxide
-dismutase (EC-SOD) appears to causally relate to higher risk of coronary
-heart disease (50) because the phenotypic measure relates inversely to
-the EC-SOD levels in arterial walls, hence \emph{in situ} activity is
-lower.
+one-sample setting (8,47).
+
+Other problems, in addition to HP, can also manifest. Frailty effects
+(48) could induce associations for late-onset traits, and often detailed
+modelling for how this can influence MR is warranted (43,49). Genetic
+variants could strongly relate to several phenotypes, for example SNPs
+that influence LDL cholesterol are also likely to influence other lipid
+fractions, making it difficult to ascertain which amongst them is the
+true causal exposure (50). We see this issue manifesting in Figure 4,
+where there appear to be causal relationships between different lipid
+fractions. The measured feature for which genetic associations are known
+could relate in complicated ways to the biological entities that is
+truly causal (2), for example higher circulating levels of the natural
+antioxidant extracellular superoxide dismutase (EC-SOD) appears to
+causally relate to higher risk of coronary heart disease (51) because
+the phenotypic measure relates inversely to the EC-SOD levels in
+arterial walls, hence \emph{in situ} activity is lower (2). Dynastic
+effects can also confound MR estimates, arising when the exposure trait
+in a previous generation influences the environment of the current
+generation. Here, the SNPs being used as instruments for the exposure
+will be associated with a potential confounder in the analysis (52). The
+associations depicted in Figure 4 involving educational attainment may
+be susceptible to bias arising from this mechanism, and protecting
+against it will likely require alternative study designs, for example by
+using sibling pairs.
 
 We also encounter a potential new problem in using machine learning
 approaches to infer the correct model for a particular summary-set,
 namely, that the model selection is data driven. This is liable to
 contribute to elevated type 1 error rates, even though we have attempted
 to separate the information used for optimisation from the information
-used to predict performance. The extent to which a machine-based method
-selector incurs higher type 1 error rates more than a human selector is
-not clear. Though MR-MoE does exhibit higher type 1 error rates than are
-desirable, they still remain amongst the lowest compared to other MR
-methods that do not suffer from the issue of data driven model
-selection.
+used to predict performance. One advantage to generating a method that
+consolidates across many methods is that it can prevent cherry picking
+the most appealing method based on their results. The extent to which a
+machine-based method selector incurs higher type 1 error rates more than
+a human selector is not clear. Though MR-MoE does exhibit higher type 1
+error rates than are desirable, they still remain amongst the lowest
+compared to other MR methods that do not suffer from the issue of data
+driven model selection.
 
-The field of MR is evolving. The advent of GWAS databases (10,51) and
+In light of these issues, we emphasise that we do not consider the
+reporting of MR-MoE (or any other single MR method) to be seen as
+performing a Mendelian randomization study. Rather, it can be used to
+motivate further detailed follow up which should include sensitivity
+analyses (12), incorporating biological knowledge regarding instruments,
+and triangulation with other sources of evidence or experimental designs
+(14). Demanding a rigorous follow up of putative associations is also
+essential for avoiding issues that may arise due to cherry picking of MR
+results. This is especially important when a large repository of
+putative associations, such as MR-EvE, is made publicly available.
+
+The field of MR is evolving. The advent of GWAS databases (10,53) and
 automated 2SMR (12) has trivialised the analytical aspect of
 investigating specific causal hypotheses. Despite the limitations
 described above, the construction of a causal graph of `everything
 versus everything' does have appeal. First, though causality is not
-guaranteed by MR, it can still be highly informative for confirming or
-negating specific hypotheses. Second, it paves the way for new
-approaches to search for novel putative associations and improve
-reliability in single analyses. The potential to exploit GWAS summary
-data within the properties of graph databases to aid with both of these
-endeavours could be transformative in biological research.
+guaranteed by MR, it can still be highly informative for supporting or
+negating specific hypotheses. Indeed, a well-powered MR that negates a
+hypothesis is likely less fallible to the pitfalls described above than
+using MR to confirm a positive association (54). Second, it paves the
+way for new approaches to search for novel putative associations and
+improve reliability in single analyses. The potential to exploit GWAS
+summary data within the properties of graph databases to aid with both
+of these endeavours could be transformative in biological research.
 
 \subsection{Acknowledgements}\label{acknowledgements}
 
 This work was supported by the UK Medical Research Council
-(MC\_UU\_12013/1).
+(MC\_UU\_12013/1, MC\_UU\_12013/8, MR/N501906/1); Cancer Research UK
+(C52724/A20138, C18281/A19169); and the SPHERE Interdisciplinary
+Research Collaboration funded by the UK Engineering and Physical
+Sciences Research Council under grant EP/K031910/1
 
 \newpage
 
@@ -817,7 +862,7 @@ MoE approach is likely most effective than any other single method.
 
 Figure 4: Lookup of causal associations involving a) LDL cholesterol and
 b) Years of Schooling. In a) the nodes are filtered to not include those
-obtained from the metabolomic studies (37,38). The arrows denote causal
+obtained from the metabolomic studies (38,39). The arrows denote causal
 direction and the values on the arrows denote the causal effect
 estimate. Only those relationships are shown for which the
 \(FDR < 0.05\).
@@ -853,7 +898,7 @@ F-statistic from the reported p-value and sample size and then
 estimate the variance of the underlying liability explained by the SNP,
 \(cor(g, x)^2 = \frac{V_a}{V_a + V_e}\). Here, \(V_e = \pi^2/3\), and
 \(V_a = 2\beta^2f(1-f)\), where \(\beta\) is the log odds ratio and
-\(f\) is the allele frequency of the SNP in the population (52). \(f\)
+\(f\) is the allele frequency of the SNP in the population (55). \(f\)
 can be estimated using the allele frequency of the SNP in an ascertained
 sample by deriving the \(2 \times 2\) contingency table from the odds
 ratio \(e^\beta\), allele frequency in the ascertained sample
@@ -1062,7 +1107,7 @@ using 133,000 of the simulations, we then applied them to the remaining
 performance for each of the remaining summary-sets. Finally we compare
 the performance of the method selected by the MoE against all remaining
 methods. The default settings for the \texttt{randomForest} package in R
-(53) were used to train the models. MR-MoE 1.0 is implemented in the
+(56) were used to train the models. MR-MoE 1.0 is implemented in the
 TwoSampleMR R package available at
 \href{https://github.com/MRCIEU/TwoSampleMR}{github.com/MRCIEU/TwoSampleMR}
 (12).
@@ -1150,47 +1195,53 @@ associations between risk factors and common diseases inferred from GWAS
 summary data. bioRxiv {[}Internet{]}. 2017; Available from:
 \url{http://www.biorxiv.org/content/early/2017/07/26/168674}
 
+\hypertarget{ref-Lawlor2017}{}
+14. Lawlor DA, Tilling K, Davey Smith G. Triangulation in aetiological
+epidemiology. International Journal of Epidemiology {[}Internet{]}. 2017
+Jan;19(R1):dyw314. Available from:
+\url{https://academic.oup.com/ije/article-lookup/doi/10.1093/ije/dyw314}
+
 \hypertarget{ref-Wright1968}{}
-14. Wright S. Evolution and the Genetics of Populations. In: Evolution
+15. Wright S. Evolution and the Genetics of Populations. In: Evolution
 and the genetics of populations. Chicago: University of Chicago Press;
 1968.
 
 \hypertarget{ref-Wagner2011}{}
-15. Wagner GP, Zhang J. The pleiotropic structure of the
+16. Wagner GP, Zhang J. The pleiotropic structure of the
 genotype--phenotype map: the evolvability of complex organisms. Nature
 Reviews Genetics {[}Internet{]}. 2011 Mar;12(3):204--13. Available from:
 \url{http://www.nature.com/doifinder/10.1038/nrg2949}
 
 \hypertarget{ref-Hill2012a}{}
-16. Hill WG, Zhang X-S. Assessing pleiotropy and its evolutionary
+17. Hill WG, Zhang X-S. Assessing pleiotropy and its evolutionary
 consequences: pleiotropy is not necessarily limited, nor need it hinder
 the evolution of complexity. Nature Reviews Genetics {[}Internet{]}.
 2012 Feb;13(4):296. Available from:
 \url{http://www.ncbi.nlm.nih.gov/pubmed/22349131}
 
 \hypertarget{ref-Hartwig2016}{}
-17. Hartwig FP, Davies NM, Hemani G, Davey Smith G. Two-sample Mendelian
+18. Hartwig FP, Davies NM, Hemani G, Davey Smith G. Two-sample Mendelian
 randomization: avoiding the downsides of a powerful, widely applicable
 but potentially fallible technique. International Journal of
 Epidemiology {[}Internet{]}. 2016 Dec;45(6):1717--26. Available from:
 \url{https://academic.oup.com/ije/article-lookup/doi/10.1093/ije/dyx028}
 
 \hypertarget{ref-Xu2017}{}
-18. Xu L, Lin SL, Schooling CM. A Mendelian randomization study of the
+19. Xu L, Lin SL, Schooling CM. A Mendelian randomization study of the
 effect of calcium on coronary artery disease, myocardial infarction and
 their risk factors. Scientific Reports {[}Internet{]}. 2017 Feb;7:42691.
 Available from:
 \href{http://www.ncbi.nlm.nih.gov/pubmed/28195141\%20http://www.pubmedcentral.nih.gov/articlerender.fcgi?artid=PMC5307362\%20http://www.nature.com/articles/srep42691}{http://www.ncbi.nlm.nih.gov/pubmed/28195141 http://www.pubmedcentral.nih.gov/articlerender.fcgi?artid=PMC5307362 http://www.nature.com/articles/srep42691}
 
 \hypertarget{ref-Larsson2017}{}
-19. Larsson SC, Burgess S, Michaëlsson K, TB H, WH C, Y P. Association
+20. Larsson SC, Burgess S, Michaëlsson K, TB H, WH C, Y P. Association
 of Genetic Variants Related to Serum Calcium Levels With Coronary Artery
 Disease and Myocardial Infarction. JAMA {[}Internet{]}. 2017
 Jul;318(4):371. Available from:
 \url{http://jama.jamanetwork.com/article.aspx?doi=10.1001/jama.2017.8981}
 
 \hypertarget{ref-Prins2016}{}
-20. Prins BP, Abbasi A, Wong A, Vaez A, Nolte I, Franceschini N, et al.
+21. Prins BP, Abbasi A, Wong A, Vaez A, Nolte I, Franceschini N, et al.
 Investigating the Causal Relationship of C-Reactive Protein with 32
 Complex Somatic and Psychiatric Outcomes: A Large-Scale Cross-Consortium
 Mendelian Randomization Study. Hay PJ, editor. PLOS Medicine
@@ -1198,36 +1249,36 @@ Mendelian Randomization Study. Hay PJ, editor. PLOS Medicine
 \href{http://www.ncbi.nlm.nih.gov/pubmed/27327646\%20http://www.pubmedcentral.nih.gov/articlerender.fcgi?artid=PMC4915710\%20http://dx.plos.org/10.1371/journal.pmed.1001976}{http://www.ncbi.nlm.nih.gov/pubmed/27327646 http://www.pubmedcentral.nih.gov/articlerender.fcgi?artid=PMC4915710 http://dx.plos.org/10.1371/journal.pmed.1001976}
 
 \hypertarget{ref-Inoshita2016}{}
-21. Inoshita M, Numata S, Tajima A, Kinoshita M, Umehara H, Nakataki M,
+22. Inoshita M, Numata S, Tajima A, Kinoshita M, Umehara H, Nakataki M,
 et al. A significant causal association between C-reactive protein
 levels and schizophrenia. Scientific Reports {[}Internet{]}. 2016
 Sep;6(1):26105. Available from:
 \href{http://www.ncbi.nlm.nih.gov/pubmed/27193331\%20http://www.pubmedcentral.nih.gov/articlerender.fcgi?artid=PMC4872134\%20http://www.nature.com/articles/srep26105}{http://www.ncbi.nlm.nih.gov/pubmed/27193331 http://www.pubmedcentral.nih.gov/articlerender.fcgi?artid=PMC4872134 http://www.nature.com/articles/srep26105}
 
+\hypertarget{ref-Hu2016}{}
+23. Hu JX, Thomas CE, Brunak S. Network biology concepts in complex
+disease comorbidities. Nature reviews Genetics {[}Internet{]}.
+2016;17(10):615--29. Available from:
+\href{http://www.nature.com/doifinder/10.1038/nrg.2016.87\%7B/\%\%7D5Cnhttp://www.ncbi.nlm.nih.gov/pubmed/27498692}{http://www.nature.com/doifinder/10.1038/nrg.2016.87\{\textbackslash{}\%\}5Cnhttp://www.ncbi.nlm.nih.gov/pubmed/27498692}
+
 \hypertarget{ref-Solovieff2013}{}
-22. Solovieff N, Cotsapas C, Lee PH, Purcell SM, Smoller JW. Pleiotropy
+24. Solovieff N, Cotsapas C, Lee PH, Purcell SM, Smoller JW. Pleiotropy
 in complex traits: challenges and strategies. Nat Rev Genet
 {[}Internet{]}. 2013 Jun;14(7):483--95. Available from:
 \href{http://www.nature.com/doifinder/10.1038/nrg3461\%20http://dx.doi.org/10.1038/nrg3461\%2010.1038/nrg3461}{http://www.nature.com/doifinder/10.1038/nrg3461 http://dx.doi.org/10.1038/nrg3461 10.1038/nrg3461}
 
 \hypertarget{ref-Hodgkin1998}{}
-23. Hodgkin J. Seven types of pleiotropy. The International journal of
+25. Hodgkin J. Seven types of pleiotropy. The International journal of
 developmental biology {[}Internet{]}. 1998;42(3):501--5. Available from:
 \url{http://www.ncbi.nlm.nih.gov/pubmed/9654038}
 
 \hypertarget{ref-Paaby2013}{}
-24. Paaby AB, Rockman MV. The many faces of pleiotropy {[}Internet{]}.
+26. Paaby AB, Rockman MV. The many faces of pleiotropy {[}Internet{]}.
 Vol. 29. 2013. pp. 66--73. Available from:
 \href{http://www.ncbi.nlm.nih.gov/pubmed/23140989\%20http://www.pubmedcentral.nih.gov/articlerender.fcgi?artid=PMC3558540\%20http://linkinghub.elsevier.com/retrieve/pii/S0168952512001692}{http://www.ncbi.nlm.nih.gov/pubmed/23140989 http://www.pubmedcentral.nih.gov/articlerender.fcgi?artid=PMC3558540 http://linkinghub.elsevier.com/retrieve/pii/S0168952512001692}
 
-\hypertarget{ref-Hu2016}{}
-25. Hu JX, Thomas CE, Brunak S. Network biology concepts in complex
-disease comorbidities. Nature reviews Genetics {[}Internet{]}.
-2016;17(10):615--29. Available from:
-\href{http://www.nature.com/doifinder/10.1038/nrg.2016.87\%7B/\%\%7D5Cnhttp://www.ncbi.nlm.nih.gov/pubmed/27498692}{http://www.nature.com/doifinder/10.1038/nrg.2016.87\{\textbackslash{}\%\}5Cnhttp://www.ncbi.nlm.nih.gov/pubmed/27498692}
-
 \hypertarget{ref-Burgess2015b}{}
-26. Burgess S, Scott RA, Timpson NJ, Davey Smith G, Thompson SG, EPIC-
+27. Burgess S, Scott RA, Timpson NJ, Davey Smith G, Thompson SG, EPIC-
 InterAct Consortium. Using published data in Mendelian randomization: a
 blueprint for efficient identification of causal risk factors. European
 Journal of Epidemiology {[}Internet{]}. 2015 Jul;30(7):543--52.
@@ -1235,160 +1286,171 @@ Available from:
 \href{http://www.ncbi.nlm.nih.gov/pubmed/25773750\%20http://www.pubmedcentral.nih.gov/articlerender.fcgi?artid=PMC4516908\%20http://link.springer.com/10.1007/s10654-015-0011-z}{http://www.ncbi.nlm.nih.gov/pubmed/25773750 http://www.pubmedcentral.nih.gov/articlerender.fcgi?artid=PMC4516908 http://link.springer.com/10.1007/s10654-015-0011-z}
 
 \hypertarget{ref-Rucker2011}{}
-27. Rucker G, Schwarzer G, Carpenter JR, Binder H, Schumacher M.
+28. Rucker G, Schwarzer G, Carpenter JR, Binder H, Schumacher M.
 Treatment-effect estimates adjusted for small-study effects via a limit
 meta-analysis. Biostatistics {[}Internet{]}. 2011 Jan;12(1):122--42.
 Available from:
 \href{http://www.ncbi.nlm.nih.gov/pubmed/20656692\%20https://academic.oup.com/biostatistics/article-lookup/doi/10.1093/biostatistics/kxq046}{http://www.ncbi.nlm.nih.gov/pubmed/20656692 https://academic.oup.com/biostatistics/article-lookup/doi/10.1093/biostatistics/kxq046}
 
 \hypertarget{ref-Han2008}{}
-28. Han C. Detecting invalid instruments using L 1-GMM. Economics
+29. Han C. Detecting invalid instruments using L 1-GMM. Economics
 Letters. 2008;101(3):285--7.
 
 \hypertarget{ref-Kang2016}{}
-29. Kang H, Zhang A, Cai TT, Small DS. Instrumental Variables Estimation
+30. Kang H, Zhang A, Cai TT, Small DS. Instrumental Variables Estimation
 With Some Invalid Instruments and its Application to Mendelian
 Randomization. Journal of the American Statistical Association.
 2016;111(513):132--44.
 
 \hypertarget{ref-Steiger1980}{}
-30. Steiger JH. Tests for comparing elements of a correlation matrix.
+31. Steiger JH. Tests for comparing elements of a correlation matrix.
 Psychological Bulletin. 1980;87(2):245--51.
 
 \hypertarget{ref-Corbin2016}{}
-31. Corbin LJ, Richmond RC, Wade KH, Burgess S, Bowden J, Smith GD, et
+32. Corbin LJ, Richmond RC, Wade KH, Burgess S, Bowden J, Smith GD, et
 al. BMI as a Modifiable Risk Factor for Type 2 Diabetes: Refining and
 Understanding Causal Estimates Using Mendelian Randomization. Diabetes
 {[}Internet{]}. 2016 Oct;65(10):3002--7. Available from:
 \href{http://www.ncbi.nlm.nih.gov/pubmed/27402723\%20http://www.pubmedcentral.nih.gov/articlerender.fcgi?artid=PMC5279886}{http://www.ncbi.nlm.nih.gov/pubmed/27402723 http://www.pubmedcentral.nih.gov/articlerender.fcgi?artid=PMC5279886}
 
 \hypertarget{ref-white2016plasma}{}
-32. White J, Sofat R, Hemani G, Shah T, Engmann J, Dale C, et al. Plasma
+33. White J, Sofat R, Hemani G, Shah T, Engmann J, Dale C, et al. Plasma
 urate concentration and risk of coronary heart disease: a Mendelian
 randomisation analysis. The Lancet Diabetes \& Endocrinology. 2016;
 
 \hypertarget{ref-Jordan1994}{}
-33. Jordan MI, Jacobs RA. Hierarchical Mixtures of Experts and the EM
+34. Jordan MI, Jacobs RA. Hierarchical Mixtures of Experts and the EM
 Algorithm. Neural Computation {[}Internet{]}. 1994 Mar;6(2):181--214.
 Available from:
 \url{http://www.mitpressjournals.org/doi/10.1162/neco.1994.6.2.181}
 
 \hypertarget{ref-brazdil2008metalearning}{}
-34. Brazdil P, Carrier CG, Soares C, Vilalta R. Metalearning:
+35. Brazdil P, Carrier CG, Soares C, Vilalta R. Metalearning:
 Applications to data mining. Springer Science \& Business Media; 2008.
 
 \hypertarget{ref-smith2009cross}{}
-35. Smith-Miles KA. Cross-disciplinary perspectives on meta-learning for
+36. Smith-Miles KA. Cross-disciplinary perspectives on meta-learning for
 algorithm selection. ACM Computing Surveys (CSUR). 2009;41(1):6.
 
 \hypertarget{ref-lemke2015metalearning}{}
-36. Lemke C, Budka M, Gabrys B. Metalearning: a survey of trends and
+37. Lemke C, Budka M, Gabrys B. Metalearning: a survey of trends and
 technologies. Artificial intelligence review. 2015;44(1):117--30.
 
 \hypertarget{ref-Shin2014}{}
-37. Shin S-Y, Fauman EB, Petersen A-K, Krumsiek J, Santos R, Huang J, et
+38. Shin S-Y, Fauman EB, Petersen A-K, Krumsiek J, Santos R, Huang J, et
 al. An atlas of genetic influences on human blood metabolites. Nature
 genetics {[}Internet{]}. 2014 Jun;46(6):543--50. Available from:
 \url{http://dx.doi.org/10.1038/ng.2982}
 
 \hypertarget{ref-Kettunen2016}{}
-38. Kettunen J, Demirkan A, Wurtz P, Draisma HHM, Haller T, Rawal R, et
+39. Kettunen J, Demirkan A, Wurtz P, Draisma HHM, Haller T, Rawal R, et
 al. Genome-wide study for circulating metabolites identifies 62 loci and
 reveals novel systemic effects of LPA. Nat Commun {[}Internet{]}. 2016
 Mar;7. Available from:
 \href{http://dx.doi.org/10.1038/ncomms11122\%20http://10.0.4.14/ncomms11122}{http://dx.doi.org/10.1038/ncomms11122 http://10.0.4.14/ncomms11122}
 
 \hypertarget{ref-Sun2017}{}
-39. Sun BB, Maranville JC, Peters JE, Stacey D, Staley JR, Blackshaw J,
+40. Sun BB, Maranville JC, Peters JE, Stacey D, Staley JR, Blackshaw J,
 et al. Consequences Of Natural Perturbations In The Human Plasma
 Proteome. bioRxiv {[}Internet{]}. 2017; Available from:
 \url{http://biorxiv.org/content/early/2017/05/05/134551}
 
 \hypertarget{ref-Willer2013}{}
-40. Willer CJ, Schmidt EM, Sengupta S, Peloso GM, Gustafsson S, Kanoni
+41. Willer CJ, Schmidt EM, Sengupta S, Peloso GM, Gustafsson S, Kanoni
 S, et al. Discovery and refinement of loci associated with lipid levels.
 Nature Genetics {[}Internet{]}. 2013;45(11):1274--83. Available from:
 \url{http://www.nature.com/doifinder/10.1038/ng.2797}
 
 \hypertarget{ref-Okbay2016}{}
-41. Okbay A, Beauchamp JP, Fontana MA, Lee JJ, Pers TH, Rietveld CA, et
+42. Okbay A, Beauchamp JP, Fontana MA, Lee JJ, Pers TH, Rietveld CA, et
 al. Genome-wide association study identifies 74 loci associated with
 educational attainment. Nature {[}Internet{]}. 2016
 May;533(7604):539--42. Available from:
 \href{http://www.ncbi.nlm.nih.gov/pubmed/27225129\%20http://www.pubmedcentral.nih.gov/articlerender.fcgi?artid=PMC4883595\%20http://www.nature.com/doifinder/10.1038/nature17671}{http://www.ncbi.nlm.nih.gov/pubmed/27225129 http://www.pubmedcentral.nih.gov/articlerender.fcgi?artid=PMC4883595 http://www.nature.com/doifinder/10.1038/nature17671}
 
 \hypertarget{ref-Anderson2017}{}
-42. Anderson E, Wade KH, Hemani G, Bowden J, Korologou-Linden R, Davey
+43. Anderson E, Wade KH, Hemani G, Bowden J, Korologou-Linden R, Davey
 Smith G, et al. The Causal Effect Of Educational Attainment On
 Alzheimer's Disease: A Two-Sample Mendelian Randomization Study. bioRxiv
 {[}Internet{]}. 2017; Available from:
 \url{http://www.biorxiv.org/content/early/2017/04/17/127993}
 
 \hypertarget{ref-kotthoff2016auto}{}
-43. Kotthoff L, Thornton C, Hoos HH, Hutter F, Leyton-Brown K. Auto-WEKA
+44. Kotthoff L, Thornton C, Hoos HH, Hutter F, Leyton-Brown K. Auto-WEKA
 2.0: Automatic model selection and hyperparameter optimization in WEKA.
 Journal of Machine Learning Research. 2016;17:1--5.
 
 \hypertarget{ref-Zhu2016}{}
-44. Zhu Z, Zhang F, Hu H, Bakshi A, Robinson MR, Powell JE, et al.
+45. Zhu Z, Zhang F, Hu H, Bakshi A, Robinson MR, Powell JE, et al.
 Integration of summary data from GWAS and eQTL studies predicts complex
 trait gene targets. Nature Genetics {[}Internet{]}. 2016
 Mar;48(5):481--7. Available from:
 \url{http://www.nature.com/doifinder/10.1038/ng.3538}
 
 \hypertarget{ref-Richardson2017}{}
-45. Richardson TG, Zheng J, Davey Smith G, Timpson NJ, Gaunt TR, Relton
+46. Richardson TG, Zheng J, Davey Smith G, Timpson NJ, Gaunt TR, Relton
 CL, et al. Causal epigenome-wide association study identifies CpG sites
 that influence cardiovascular disease risk. bioRxiv {[}Internet{]}.
 2017; Available from:
 \url{http://biorxiv.org/content/early/2017/04/29/132019}
 
 \hypertarget{ref-Wang2017}{}
-46. Wang L, Michoel T. Efficient And Accurate Causal Inference With
+47. Wang L, Michoel T. Efficient And Accurate Causal Inference With
 Hidden Confounders From Genome-Transcriptome Variation Data. bioRxiv
 {[}Internet{]}. 2017; Available from:
 \url{http://www.biorxiv.org/content/early/2017/04/19/128496}
 
 \hypertarget{ref-Aalen2015}{}
-47. Aalen OO, Valberg M, Grotmol T, Tretli S. Understanding variation in
+48. Aalen OO, Valberg M, Grotmol T, Tretli S. Understanding variation in
 disease risk: the elusive concept of frailty. International journal of
 epidemiology {[}Internet{]}. 2015 Aug;44(4):1408--21. Available from:
 \href{http://www.ncbi.nlm.nih.gov/pubmed/25501685\%20http://www.pubmedcentral.nih.gov/articlerender.fcgi?artid=PMC4588855}{http://www.ncbi.nlm.nih.gov/pubmed/25501685 http://www.pubmedcentral.nih.gov/articlerender.fcgi?artid=PMC4588855}
 
 \hypertarget{ref-Noyce2017}{}
-48. Noyce AJ, Kia DA, Hemani G, Nicolas A, Price TR, De Pablo-Fernandez
+49. Noyce AJ, Kia DA, Hemani G, Nicolas A, Price TR, De Pablo-Fernandez
 E, et al. Estimating the causal influence of body mass index on risk of
 Parkinson disease: A Mendelian randomisation study. Brayne C, editor.
 PLOS Medicine {[}Internet{]}. 2017 Jun;14(6):e1002314. Available from:
 \url{http://dx.plos.org/10.1371/journal.pmed.1002314}
 
 \hypertarget{ref-Burgess2014a}{}
-49. Burgess S, Freitag DF, Khan H, Gorman DN, Thompson SG. Using
+50. Burgess S, Freitag DF, Khan H, Gorman DN, Thompson SG. Using
 multivariable Mendelian randomization to disentangle the causal effects
 of lipid fractions. PloS one {[}Internet{]}. 2014 Jan;9(10):e108891.
 Available from:
 \url{http://journals.plos.org/plosone/article?id=10.1371/journal.pone.0108891}
 
 \hypertarget{ref-Juul2003}{}
-50. Juul K, Tybjaerg-Hansen A, Marklund S, Heegaard NHH, Steffensen R,
+51. Juul K, Tybjaerg-Hansen A, Marklund S, Heegaard NHH, Steffensen R,
 Sillesen H, et al. Genetically Reduced Antioxidative Protection and
 Increased Ischemic Heart Disease Risk: The Copenhagen City Heart Study.
 Circulation {[}Internet{]}. 2003 Dec;109(1):59--65. Available from:
 \href{http://www.ncbi.nlm.nih.gov/pubmed/14662715\%20http://circ.ahajournals.org/cgi/doi/10.1161/01.CIR.0000105720.28086.6C}{http://www.ncbi.nlm.nih.gov/pubmed/14662715 http://circ.ahajournals.org/cgi/doi/10.1161/01.CIR.0000105720.28086.6C}
 
+\hypertarget{ref-VonHinke2016}{}
+52. Hinke S von, Davey Smith G, Lawlor D, Propper C, Windmeijer F.
+Genetic markers as instrumental variables. J Health Econ.
+2016;45:131--48.
+
 \hypertarget{ref-Staley2016}{}
-51. Staley JR, Blackshaw J, Kamat MA, Ellis S, Surendran P, Sun BB, et
+53. Staley JR, Blackshaw J, Kamat MA, Ellis S, Surendran P, Sun BB, et
 al. PhenoScanner: a database of human genotype--phenotype associations.
 Bioinformatics {[}Internet{]}. 2016 Oct;32(20):3207--9. Available from:
 \href{http://www.ncbi.nlm.nih.gov/pubmed/27318201\%20http://www.pubmedcentral.nih.gov/articlerender.fcgi?artid=PMC5048068\%20https://academic.oup.com/bioinformatics/article-lookup/doi/10.1093/bioinformatics/btw373}{http://www.ncbi.nlm.nih.gov/pubmed/27318201 http://www.pubmedcentral.nih.gov/articlerender.fcgi?artid=PMC5048068 https://academic.oup.com/bioinformatics/article-lookup/doi/10.1093/bioinformatics/btw373}
 
+\hypertarget{ref-Vanderweele2014}{}
+54. Vanderweele TJ, Tchetgen Tchetgen EJ, Cornelis M, Kraft P.
+Methodological challenges in mendelian randomization. Epidemiology
+(Cambridge, Mass) {[}Internet{]}. 2014 May;25(3):427--35. Available
+from: \url{http://www.ncbi.nlm.nih.gov/pubmed/24681576}
+
 \hypertarget{ref-Lee2013c}{}
-52. Lee SH, Wray NR. Novel genetic analysis for case-control genome-wide
+55. Lee SH, Wray NR. Novel genetic analysis for case-control genome-wide
 association studies: quantification of power and genomic prediction
 accuracy. PLoS One. 2013;8(8):e71494.
 
 \hypertarget{ref-Liaw2002}{}
-53. Liaw A, Wiener M. Classification and Regression by randomForest. R
+56. Liaw A, Wiener M. Classification and Regression by randomForest. R
 News {[}Internet{]}. 2002;2(3):18--22. Available from:
 \url{http://cran.r-project.org/doc/Rnews/}
 
