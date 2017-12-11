@@ -1,6 +1,5 @@
 ---
-title: Towards the construction of a causal map of the human phenome
-author: Gibran Hemani, Jie Zheng, Jack Bowden, Oliver Davies, Philip Haycock, George Davey Smith, Tom Gaunt
+title: Automating Mendelian randomization through machine learning to construct a putative causal map of the human phenome
 date: "`r format(Sys.time(), '%d %B %Y')`"
 output:
   pdf_document:
@@ -13,76 +12,234 @@ bibliography: manuscript.bib
 csl: vancouver.csl
 ---
 
+Gibran Hemani$^1$, Jack Bowden$^1$, Philip Haycock$^1$, Jie Zheng$^1$, Oliver Davis$^1$, Peter Flach$^2$, Tom Gaunt$^{1,*}$, George Davey Smith$^{1,*}$
+
+1. MRC Integrative Epidemiology Unit (IEU) at the University of Bristol, Population Health Sciences, Bristol, UK
+2. Intelligent Systems Laboratory, Department of Computer Science, University of Bristol
+
+Correspondence to: g.hemani@bristol.ac.uk
+
+\* Equal contribution
+
+## Abstract
+
+A major application for genome-wide association studies (GWAS) has been the emerging field of causal inference using Mendelian randomization (MR), where the causal effect between a pair of traits can be estimated using only summary level data. MR depends on SNPs exhibiting vertical pleiotropy, where the SNP influences an outcome phenotype only through an exposure phenotype. Issues arise when this assumption is violated due to SNPs exhibiting horizontal pleiotropy. We demonstrate that across a range of pleiotropy models, instrument selection will be increasingly liable to selecting invalid instruments as GWAS sample sizes continue to grow. Methods have been developed in an attempt to protect MR from different patterns of horizontal pleiotropy, and here we have designed a mixture-of-experts machine learning framework (MR-MoE 1.0) that predicts the most appropriate model to use for any specific causal analysis, improving on both power and false discovery rates. Using the approach, we systematically estimated the causal effects amongst 2407 phenotypes. Almost 90% of causal estimates indicated some level of horizontal pleiotropy. The causal estimates are organised into a publicly available graph database ([http://eve.mrbase.org](http://eve.mrbase.org)), and we use it here to highlight the numerous challenges that remain in automated causal inference.
+
+
 ## Introduction
 
-Mendelian randomisation (MR) [@DaveySmith2003; @DaveySmithHemani2014] exploits genetic pleiotropy to infer the causal relationships between phenotypes. Suppose that one trait (the exposure) causally influences another (the outcome). If a SNP influences the outcome through the exposure then the SNP is exhibiting vertical pleiotropy. Such a genetic variant is considered to be an instrumental variable for the exposure, and can be exploited to mimic a randomised controlled trial, enabling a causal estimate to be made by comparing the outcome phenotypes between those individuals that have the exposure-increasing allele against those who do not. Multiple independent genetic variants for a particular exposure can be used jointly to improve causal inference, because a) each variant represents an independent natural experiment, and an overall causal estimate can be obtained by meta-analysing the single estimates from each instrument; and b) some violations of the assumptions of MR (most notably that the SNP influences the outcome through no pathways other than the exposure) can be evaluated through sensitivity analyses.
+Mendelian randomization (MR) [@DaveySmith2003; @DaveySmithHemani2014] exploits vertical pleiotropy to infer the causal relationships between phenotypes. Suppose that one trait (the exposure) causally influences another (the outcome). If a SNP influences the outcome through the exposure then the SNP is exhibiting vertical pleiotropy (see Box 1). Such a genetic variant is considered to be a valid instrumental variable if it only influences the outcome through the exposure (the exclusion restriction assumption). Vertical pleiotropy can be exploited to mimic a randomised controlled trial, enabling a causal estimate to be made by comparing the outcome phenotypes between those individuals that have the exposure-increasing allele against those who do not, although not without caveats [@Holmes2017]. Multiple independent genetic variants for a particular exposure can be used jointly to improve causal inference, because a) each variant represents an independent natural experiment, and an overall causal estimate can be obtained by meta-analysing the single estimates from each instrument; and b) potential bias arising from the exclusion restriction assumption can be detected or corrected by evaluating the consistency of effects across instruments [@Bowden2015; @Bowden2016b; @Bowden2017; @Hartwig2017a; @Hemani2017; @Verbanck2017].
 
-Genome-wide association studies (GWAS) have identified genetic instrumental variables for thousands of phenotypes. Recent developments in Mendelian randomisation have enabled knowledge of instrumental variables to be applied using only summary level data (known as two-sample MR, 2SMR). Here, in order to infer the causal effect of an exposure on an outcome all that is required is an estimate of the genetic effects of the instrumenting SNP on the exposure, and the corresponding estimate of the effect on the outcome. This has two major advantages. First, GWAS summary data is non-disclosive and often publicly available. Second, causal inference can be made between phenotypes even if they have not been measured in the same samples, limiting the breadth of possible causal estimates only to the availability of GWAS summary data for the traits in question.
+Genome-wide association studies (GWAS) have identified potential instrumental variables for thousands of phenotypes [@Hindorff2010]. Recent developments in MR have enabled knowledge of instrumental variables to be applied using either individual-level or only summary-level data (known as two-sample MR, 2SMR) [@Pierce2013]. Here, in order to infer the causal effect of an exposure on an outcome all that is required are the genetic effects of the instrumenting SNP on the exposure and the outcome. This has three major advantages. First, GWAS summary data are non-disclosive and often publicly available. Second, causal inference can be made between phenotypes even if they have not been measured in the same samples, limiting possible MR analyses only by the availability of GWAS summary data for the traits in question [@Hemani2016]. Third, because each instrumental variable mimics an independent randomization study, we can view the causal inference problem through the simple and widely understood prism of a meta-analysis [@Bowden2017].
 
-Problems with obtaining unbiased causal effects can arise, however, if the genetic instruments exhibit horizontal pleiotropy (HP), where they influence the outcome through a pathway other than the exposure. The extent of this problem is not to be understated, and many methods have been developed that attempt to reliably obtain unbiased causal estimates under specific models of HP. It is considered best practice to report estimates from all available methods as sensitivity analyses when presenting causal estimates, however this strategy is not necessarily optimal for several reasons. First, if different methods disagree it is not possible to know which is correct because the appropriate model of HP is not known. Second, though the IVW approach is most statistically powerful under no HP, it can have high false negative or low true positive rates in the presence of HP compared to other methods. Given that pleiotropy has been hypothesised to be universal, defaulting to the IVW method in the first instance and using other methods as sensitivity analyses may not be appropriate. Third, the available methods do not cover all possible models of HP, and therefore an automated method for instrument selection may be necessary. Fourth, it could be of interest to make causal effect estimates for thousands of traits, in which case a discerning evaluation of each causal effect of interest may not be possible or convenient.
+Problems with obtaining unbiased causal effects can arise, however, if the genetic instruments exhibit horizontal pleiotropy, where they influence the outcome through a pathway other than the exposure (Box 1). The extent of this phenomenon is not to be understated, and many methods have been developed that attempt to reliably obtain unbiased causal estimates under specific models of horizontal pleiotropy [@Bowden2015; @Bowden2016b; @Bowden2017; @Hartwig2017a; @Verbanck2017; @Zhu2017]. It is considered best practice to triangulate estimates from a range of MR methods (and other experimental designs) when presenting causal estimates so as to assess the potential for different horizontal pleiotropy models and other violations of MR assumptions [@Lawlor2017]. However there are circumstances in which it is desirable to consolidate across many methods to obtain a single MR estimate. First, it could be of interest to screen links between thousands of traits for being potential causal associations, in which case a critical evaluation of each causal estimate of interest may not be possible or convenient. Second, though the simplest method, based on inverse-variance weighted (IVW) meta analysis [@Pierce2013], is most statistically powerful under no horizontal pleiotropy, it can have high false positive or low true positive rates in the presence of horizontal pleiotropy compared to other methods. Pleiotropy has been hypothesised to be universal [@Wright1968], though the degree and nature (e.g. horizontal versus vertical, see Box 1) to which this may be the case is contested [@Wagner2011; @Hill2012a], hence defaulting to the IVW method in the first instance and using other methods as sensitivity analyses may not be appropriate. Third, if different methods disagree it is not possible to know which is correct because the true nature of horizontal pleiotropy exhibited by the instruments is not known. Fourth, the available methods do not cover all possible models of horizontal pleiotropy, and therefore an automated method for instrument selection may be necessary. 
 
-In this paper we introduce two innovations towards improving the reliability of MR estimates. First, we introduce an approach to discard genetic variants that are likely to be invalid. Second, we hypothesised that characteristics of the summary data could indicate which method would be most reliable, and we introduce new machine learning approaches that attempt to automate both instrument and method selection. Using curated GWAS summary data for thousands of phenotypes, we use these new methods to construct a graph of millions of causal estimates. We consider this to be only a 'first draft' of the causal map of the human phenome.
+In this paper we introduce two innovations towards improving the reliability of MR estimates. First, we present an approach to discard genetic variants that are likely to be invalid. Second, we hypothesised that characteristics of the summary data could indicate which method would be most reliable, and we introduce new machine learning approaches that attempt to automate both instrument and method selection. Using curated GWAS summary data for thousands of phenotypes [@Hemani2016], we use these new methods to construct a graph of millions of causal estimates. Motivated by the recent avalanche [@Hartwig2016] of 2SMR publications, with similar [@Xu2017; @Larsson2017] or contradicting [@Prins2016; @Inoshita2016] conclusions despite using the same data [@Hartwig2016], we developed a graph database to represent these estimates in a consistent manner. We consider this to be a 'working draft' of the causal map of the human phenome, but raise caution throughout that its interpretation is far from straightforward, and that future corrections and refinements will inevitably follow as data grows and 2SMR methods evolve.
+
+
+
+### Box 1: Pleiotropic mechanisms
+
+Pleiotropy is the phenomenon whereby a single genetic variant influences multiple phenotypes. The mechanisms behind it can arise through many different mechanisms, for example a single variant influences multiple genes; a single gene generates multiple gene products; a single gene product has multiple cellular functions; or a single cellular function influences multiple phenotypes [@Hu2016]. How we classify the pleiotropic mechanism depends on question and context, and in this paper we discuss pleiotropy in two forms - vertical and horizontal. Vertical pleiotropy has also been known as mediated pleiotropy [@Solovieff2013], because the genetic variant influences one trait, which in turn influences a second trait. It has also been termed, in some contexts, Type II pleiotropy [@Wagner2011] and secondary pleiotropy [@Hodgkin1998]. It is this form of pleiotropy that MR assumes to make causal inference between two traits.
+
+By contrast, horizontal pleiotropy can manifest in a myriad of different ways, but the basic principle is that the genetic variant influences two different phenotypes through independent pathways. Depending on context, horizontal pleiotropy can also be termed biological pleiotropy [@Solovieff2013], Type I pleiotropy [@Wagner2011], developmental pleiotropy or selectional pleiotropy [@Paaby2013]. From the perspective of MR, horizontal pleiotropy arises when a SNP influences an outcome trait through some pathway other than the exposure trait. 
+
+A genetic variant can exhibit both horizontal and vertical pleiotropy in different MR analyses. For example, consider a scenario where a SNP influences the expression levels of two genes (X and Y), and gene X influences trait A while gene Y influences trait B. Then:
+
+- The genetic variant is exhibiting a vertical pleiotropic effect on trait A and the expression level of gene X. Here, all other assumptions being met, the genetic variant would be a valid instrument if used to estimate the causal effect of the gene expression level on trait A. However, 
+- the SNP is exhibiting a horizontal pleiotropic effect on trait A and trait B through the two gene expression levels. Here the genetic variant would be invalid if used to estimate the causal effect of trait A on trait B.
+
+
+![](images/pleiotropy.png)
+
+Adapted from Figure 3 in Hu et al (2016). 
 
 
 ## Methods
 
 ### GWAS summary data and their use in 2SMR
 
-The use of summary data in two-sample MR is described in detail elsewhere. A brief outline of the procedure is as follows. First, genetic instruments for the exposure trait need to be identified - those SNPs with $p < 10^{-8}$ are retained, collecting their effect sizes and standard errors and effect alleles for the association with the exposure trait. These can be obtanied manually from complete summary data or from curated lists of significant GWAS associations. Next, the effects of those SNPs on the outcome need to be obtained, typically necessitating complete summary data because it is unlikely that these SNPs will have reached genome-wide significance (and therefore be present in curated catalogues). At its most simple implementation, the regression of the SNP-exposure effect sizes against the SNP-outcome effect sizes, with greater weight afforded to those SNPs with smaller SNP-outcome standard errors, provides the estimate of the causal effect of the exposure on the outcome.
+The use of summary data in two-sample MR is described in detail elsewhere [@Burgess2015b; @Hemani2016]. A brief outline of the procedure is as follows. First, genetic instruments for the exposure trait need to be identified - those SNPs with $p < 10^{-8}$ are retained in order to ensure that the first assumption of MR (that the instrument associates with the exposure) is generally satisfied. We collect their effect sizes, standard errors and effect alleles for the association with the exposure trait. These can be obtained from published GWAS summary data, either from from curated lists of established GWAS associations [@Hindorff2010] or study websites comprising complete summary data (all SNP effects across the genome regardless of strength of association). Next, the effects of those SNPs on the outcome need to be obtained, typically necessitating access to complete summary data because these SNPs will not usually reach genome-wide significance for the outcome trait (and are therefore usually absent in curated catalogues).
 
-Given summary data for a large number of traits, it is straightforward to exhaustively analyse the causal relationships of every trait against every other trait for which there is sufficient summary data available. Supplementary table X provides a list of all traits that have available GWAS summary data, indicating if they have complete summary data (in which case they can be used as both exposure traits and outcome traits), or if they only have significant associations (in which they can only be used as exposure traits). Supplementary table X provides a list of the genetic instruments used for each trait.
+We use the term *summary-set* to refer to the minimum data required to perform 2SMR analysis - four columns comprising the SNP-exposure and SNP-outcome effects and their standard errors, with each rows corresponding to a SNP that is used as an instrument for the exposure. 
+
+In its simplest implementation, the regression of the SNP-exposure effect sizes against the SNP-outcome effect sizes, with greater weight afforded to those SNPs with smaller SNP-outcome standard errors, provides the estimate of the causal effect of the exposure on the outcome. This is known as the IVW method.
+
+Given summary data for a large number of traits, it is straightforward to exhaustively analyse the causal relationships of every trait against every other trait for which there are sufficient summary data available. Supplementary table 1 provides a list of all traits that have available GWAS summary data that were used in these analyses.
 
 
-### Mendelian randomisation methods and their assumptions
+### MR methods and their assumptions
 
-In this paper we consider three main classes of MR estimation. Full details for each approach have been described extensively elsewhere.
+In this paper we consider three main classes of MR estimation. Full details for each approach have been described previously. A summary of the methods is given in Supplementary table 2. Though other methods also exist we have limited the analyses to the following 14 methods for simplicity.
 
-**Mean-based methods:** Here we consider four nested models. The inverse variance weighted (IVW) fixed effects meta-analysis approach assumes that variants exhibit no HP. IVW random effects meta-analysis relaxes the HP assumption, allowing it to be present but balanced - such that it only leads to increased heterogeneity around the regression and not introducing bias. Fixed effects Egger regression relaxes the HP assumption further by allowing a non-zero intercept which essentially allows horizontal pleiotropy be directional, where it systematically occurs in a specific direction. Random effects Egger regression allows heterogeneity around the directional HP, as long as the HP effects are not correlated with the SNP-exposure effects (this is the INSIDE assumption). 
+**Mean-based methods:** Here we consider four nested models [@Bowden2017]. The inverse variance weighted (IVW) fixed effects meta-analysis approach assumes that variants exhibit no horizontal pleiotropy. IVW random effects meta-analysis relaxes the horizontal pleiotropy assumption, allowing it to be present but balanced - such that it only leads to increased heterogeneity around the regression line without affecting the slope (and therefore not introducing bias). Fixed effects Egger regression [@Bowden2015] relaxes the horizontal pleiotropy assumption further by allowing a non-zero intercept which essentially allows overall horizontal pleiotropy to be directional, where its total effect influences the outcome in a specific direction. Random effects Egger regression further allows heterogeneity around the slope having accounted for overall directional horizontal pleiotropy [@Bowden2017], as long as the horizontal pleiotropy effects are not correlated with the SNP-exposure effects (also known as the INSIDE assumption)[@Bowden2015]. 
 
-The Rucker framework uses estimates of heterogeneity in the IVW and Egger frameworks to navigate between these nested models. A jackknife approach (random selection with replacement of instruments) can be used to obtain a sampling distribution for the model estimate amongst these four variations. Using 1000 rounds of jackknife estimates, we can obtain a final estimate using the mean or the median of the distribution. We only use the jackknife approach for associations where there are 15 or more variants to avoid combinatorial saturation.
+The Rucker framework [@Rucker2011], adapted to MR [@Bowden2017] uses estimates of heterogeneity in the IVW and Egger frameworks to navigate between these nested models. A jackknife approach (random selection with replacement of the complete set of instruments) can be used to obtain a sampling distribution for the model estimate amongst these four variations. Using 1000 rounds of jackknife estimates, we can obtain a final estimate using the mean or the median of the distribution. We only use the jackknife approach for MR analyses where there are 15 or more instruments, in order to avoid saturating the possible number of instrument combinations. 
 
-**Median-based methods:** An alternative approach is to take the median effect of all available instruments. This has the advantage that up to half the instruments can be invalid, and the estimate will remain unbiased. Developing the approach further to allow stronger instruments to contribute more towards the estimate can be obtained by obtaining the median of the weights of each instrument. The penalised weighted median estimator ...
+The four nested models (IVW fixed effects, IVW random effects, Egger fixed effects, Egger random effects) plus the three Rucker estimates (point estimate, mean of the jackknife, median of the jackknife) provide seven mean-based estimators.
 
-**Mode-based methods:** Similar to the median, the mode based estimator clusters the instruments into groups based on similarity of causal effects, and returns the final causal effect estimate based on the cluster that has the largest number of instruments. This can be extended in two ways, first by weighting the strength of each cluster by the inverse of the variance of the SNP-outcome associations in the cluster; second by weighting the strength of each cluster by the inverse of the variance of the SNP-exposure associations.
+**Median-based methods:** An alternative approach is to take the median effect of all available instruments [@Han2008; @Bowden2016b]. This has the advantage that only half the instruments need to be valid, and the estimate will remain unbiased. The weighted median estimate develops the approach further to allow stronger instruments to contribute more towards the estimate can be obtained by weighting the contribution of each instrument by the inverse of its variance. The penalised weighted median estimator introduces a further weight to the instruments, penalising any instrument that contributes substantially towards the heterogeneity statistic. Together, this provides three median-based estimators. Other estimation strategies not considered here, such as LASSO regression, have also been developed for the situation where at least half of the instruments are valid [@Kang2016].
 
+**Mode-based methods:** The mode-based estimator clusters the instruments into groups based on similarity of causal effects, and returns the final causal effect estimate based on the cluster that has the largest number of instruments [@Hartwig2017a]. There are four implementations of this method: the simple and the weighted mode, each weighted with or without the assumption of no measurement error in the exposure estimates (NOME). The simple mode is the unweighted mode of the empirical density function of causal estimates, whereas the weighted mode is weighted by the inverse variance of the outcome effect. The bandwidth parameter was set to 1 by default.
 
 
 ### Instrument selection
 
 #### Top hits
 
-The simplest approach to selecting instruments for performing MR is to take take SNPs that have been declared significant in the published GWAS for the exposure. This typically involves obtaining SNPs that surpass $p < 5 \times 10^{-8}$, using clumping to obtain independent SNPs, and then replicating in an independent sample. These results are often recorded in public GWAS catalogs. Alternatively the clumping procedure can be performed using complete summary data in MR-Base. We call this the "top hits" strategy.
+The simplest approach to selecting instruments is to take SNPs that have been declared significant in the published GWAS for the exposure. This typically involves obtaining SNPs that surpass $p < 5 \times 10^{-8}$, using clumping to obtain independent SNPs, and then replicating in an independent sample. These results are often recorded in public GWAS catalogs. Alternatively the clumping procedure can be performed using complete summary data in MR-Base [@Hemani2016]. Complete summary data refers to association results for all SNPs used in a GWAS i.e. not only those passing statistical thresholds for significance. We call this the "top-hits" strategy.
 
 
 #### Steiger filtering
 
-With genome-wide association studies growing ever larger, the statistical power to detect significant associations that may be influencing the trait downstream of many other pathways increases. For example, if a SNP $g_{A}$ influences trait $A$, and trait $A$ influences trait $B$, then a sufficiently powered GWAS will identify the $g_{A}$ as being significant for trait $B$ (Figure 1a). Using $g_{A}$ as an instrument to test the causal effect of $A$ on $B$ is perfectly valid. But in the (incorrectly hypothesised) MR analysis of trait $B$ on trait $A$ could erroneously result in the apparent causal association of $B$ on $A$. If $g_{A}$ is only one of many known instruments for $B$, amongst which some are valid, it is to the advantage of the researcher to exclude $g_{A}$ from the analysis. 
+With genome-wide association studies growing ever larger, the statistical power to detect significant associations that may be influencing the trait downstream of many other pathways increases. For example, if a SNP $g_{A}$ influences trait $A$, and trait $A$ influences trait $B$, then a sufficiently powered GWAS will identify the $g_{A}$ as being significant for trait $B$ (Figure 1a). Using $g_{A}$ as an instrument to test the causal effect of $A$ on $B$ is perfectly valid in some cases. But the (incorrectly hypothesised) MR analysis of trait $B$ on trait $A$, for example, could erroneously result in the apparent causal effect of $B$ on $A$. It is to the advantage of the researcher to exclude $g_{A}$ from the analysis from the analysis of $B$ against $A$. 
 
-An approach to inferring the causal direction between phenotypes was developed recently, using the following basic premise. If trait $A$ causes trait $B$ then 
+An approach to inferring the causal direction between phenotypes [@Hemani2017] uses the following basic premise. If trait $A$ causes trait $B$ then 
 
 $$
 \sum^M_{i=1}{cor(g_{i}, A)^2} > \sum^M_{i=1}{cor(g_{i}, B)^2}
 $$
 
-because the $cor(g_{i}, B)^2 = cor(A, B)^{2} cor(g_{i}, A)^{2}$. This simple inequality will not hold in some cases, for example $\rho_{x, x_o} < \rho_{x,y}\rho_{y,y_o}$ where $\rho_{x, x_o}$ and $\rho_{y, y_o}$ are the precision of the measurements of the $x$ and $y$. Steiger's Z-test of correlated correlations can be used to formally test the extent to which the two correlations are statistically different.
+because the $cor(g_{i}, B)^2 = cor(A, B)^{2} cor(g_{i}, A)^{2}$. This simple inequality will not hold in some cases, for example $cor(x, x_o) < cor(x,y)cor(y,y_o)$ where $cor(x, x_o)$ and $cor(y, y_o)$ are the precision of the measurements of the $x$ and $y$. Some combinations of confounding effects can also distort the $cor(g,x)$ and $cor(g,y)$ parameters, as has been discussed in detail previously [@Hemani2017]. Large differences in sample sizes between the exposure and outcome GWASs may also have a practical impact on the efficacy of this approach. However, we use it here as a computationally inexpensive and approximate method to identify variants that are likely to be invalid (Figure 1a). Steiger's Z-test of correlated correlations [@Steiger1980] can be used to formally test the extent to which the two correlations are statistically different.
 
-Here we adapt this approach to automatically filter SNPs that are liable to be invalid (Figure 1a). In this case the Steiger test applied to each variant in turn will identify $g_{A}$ as being unlikely to primarily associate with $B$ relative to $A$. Similarly, for SNPs that influence confounders of $A$ and $B$ or those variants that exhibit horizontal pleiotropy, the difference in $cor(g_{i}, A)^2$ and $cor(g_{i}, B)^2$ will be reduced, increasing the likelihood of the SNP being excluded because the Steiger Z-test is less likely to be significant.
+Other methods have been developed to identify invalid instruments for the purposes of exclusion from MR analyses [@Corbin2016; @Verbanck2017; @Zhu2017], based on the notion that outlying instruments are more likely to be a source of horizontal pleiotropy. A potential drawback of this approach is that the outlier SNPs in a summary-set might be the only reliable ones. This could arise, for example, for the *CRP* variant instrumenting C-reactive protein levels [@Prins2016], or the *SLC2A9* variant influencing serum urate levels [@white2016plasma].
 
-To estimate $cor(g, x)^2$, if $x$ is continuous we obtain the F-statistic from the reported p-value and sample size and then $cor(g, x)^2 = \frac{F}{N - 2 - F}$. If $x$ is binary then our objective is to estimate the variance of the risk liability explained by the SNP, $cor(g, x)^2 = \frac{V_a}{V_a + V_e}$. Here, $V_e = \pi^2/3$, and $V_a = 2\beta^2p(1-p)$, where $\beta$ is the log odds ratio and $p$ is the allele frequency of the SNP in the population. $p$ can be estimated using the allele frequency of the SNP in an ascertained sample by deriving the $2 \times 2$ contingency table from the odds ratio $e^\beta$, allele frequency in the ascertained sample $p_{cc}, and number of cases $N_1$ and controls $N_0$.
+To avoid this, we primarily developed Steiger filtering to identify those instruments that are likely to be arising due to reverse cause, but it also has the potential to detect SNPs that are exhibiting horizontal pleiotropy or primarily influencing confounders. Further details are provided in the Online Methods.
 
 ### Competitive mixture of experts
 
-We consider 14 MR methods, for which instruments can be supplied using two instrument selection strategies, leading to 28 methods in total. In the context of this analysis, each method is considered to be an 'expert', taking a set of SNP-exposure and SNP-outcome effect sizes and their standard errors as inputs. Our objective is to select the expert most likely to be correct for a specific MR analysis. This involves creating a 'gating function', whose purpose is to decide which expert to use for a specific MR analysis, given the parameter space that is occupied by that dataset.
+We consider the 14 MR methods described above, for which instruments can be supplied using two instrument selection strategies, leading to 28 strategies in total (Supplementary table 2). Each method assumes or performs best for a different model of pleiotropy. Our objective is to select the method most likely to be correct for a specific MR analysis by predicting the model of pleiotropy, and relating that prediction to the most appropriate model. To achieve this we use a "mixture of experts" machine learning approach [@Jordan1994], where each MR strategy is considered to be an 'expert', taking a summary-set as its input. An overview of the approach is shown in Figure 2.
 
-#### Mixture of experts
+The mixture of experts method seeks to divide a parameter space into subdomains, such that a particular expert is used primarily for problems that reside in a subdomain most suited to that expert. In this case we first identify characteristics of the SNP-exposure and SNP-outcome associations for which one specific MR method is most likely to yield highest statistical power for non-null associations, and lowest false discovery rates for null associations. This involves creating a 'gating function', whose purpose is to decide which expert to use for a specific MR analysis, given the parameter space that is occupied by that summary-set. The metrics are a collection of regression diagnostics and are described in Supplementary table 3.
 
-The mixture of experts (MoE) method is a machine learning approach which seeks to divide a parameter space into subdomains, such that a particular expert is used primarily for problems that reside in a subdomain most suited to that expert. In this case our objective is to identify characteristics of the SNP-exposure and SNP-outcome associations for which one specific MR method is most likely to yield highest statistical power for non-null associations, and lowest false discovery rates for null associations.
+The gating function needs to be trained using data for which the true causal effect is known, and to this end we generated a large number of simulated summary-sets. We trained the gating function using random forest learning algorithms that seek to identify sectors of the parameter space that are most likely to return accurate estimates for a particular expert. Figure 2a illustrates how the gating function is trained using simulated data. New summary-sets can then be applied to the trained mixture of experts (MoE) model (Figure 2b). We call this implementation MR-MoE 1.0. Full details are provided in the Online Methods. MR-MoE 1.0 is implemented in the TwoSampleMR R package available at [github.com/MRCIEU/TwoSampleMR](https://github.com/MRCIEU/TwoSampleMR) [@Hemani2016].
+
+It should be noted that in the original hierarchical mixture of experts approach of [@Jordan1994] the gating function and the experts share the same input space and are trained simultaneously using expectation-maximisation. In our approach the gating function is defined over a separate input space consisting of the parameter space of the experts, and is trained separately in a supervised setting using simulated data. As such our MR-MoE approach fits the framework of meta-learning [@brazdil2008metalearning; @smith2009cross; @lemke2015metalearning] where machine learning methods are applied at the 'meta-level' to analyse the results of machine learning experiments at the 'base-level', in order to be able to understand and model the capabilities of each expert and recommend which expert should be applied to a given problem. From this perspective the 28 MR strategies are the base-models, the gating function is the meta-model, and its meta-features are the parameters of the summary-sets. 
+
+
+### Graph database of MR estimates
+
+The set of MR estimates obtained from this analysis, and the summary-sets used to generate them, are deposited in a Neo4j graph database. Here node representations exist for traits and SNPs; and relationship representations exist for SNP-trait associations and trait-trait MR estimates. Because each trait-trait association has up to 28 different MR estimates, for simplicity we also distill this down to a third relationship type comprising a single 'best estimate' for each trait-trait association using the following rules:
+
+1. If the number of variants after Steiger filtering is greater than 5 then apply the MoE to obtain the best method. This value is chosen arbitrarily as a minimum number of variants for which the different MR methods can model horizontal pleiotropy
+2. If the number of variants after Steiger filtering is less than or equal to 5 but greater than 1 then use the IVW random effects approach on the filtered set of variants
+3. If there is 1 variant retained in the Steiger approach then use the Wald ratio on the remaining variant
+4. If there are no variants remaining after Steiger filtering then declare no estimate of a causal association possible.
+
+The graph can be queried directly using the cypher language at [http://eve-neo4j.mrbase.org](http://eve-neo4j.mrbase.org) or through a basic web interface at [http://eve.mrbase.org](http://eve.mrbase.org). For specific hypotheses we strongly recommend that estimates from all sensitivity analyses are scrutinised and reported. 
+
+
+## Results
+
+### Steiger filtering improves reliability
+
+As statistical power for GWAS studies improves the likelihood of a significant association being discovered for a trait that acts primarily on one of its precursors increases (Figure 1a). This presents a problem when GWAS significance is used as the sole criterion for instrument selection if the hypothesis being tested is either a) the trait causing the precursor, or b) the trait causing some other trait and the precursor causally relates to both (in which case the precursor is a confounder). We evaluated the efficacy of the Steiger filtering approach for improving instrument selection using 100,000 simulated summary-sets comprising both null and non-null causal models. For each summary-set, instruments were selected based on the top-hits strategy and the Steiger filtering strategy, and MR was performed using 14 different methods based on instruments selected from each of these strategies.
+
+Figure 1b shows that the top-hits strategy led to over half of the instruments being primarily associated with either confounders or the outcome phenotype, not the exposure phenotype. For brevity, we refer to the latter type of invalid instruments as “reverse causal” instruments. The proportion of invalid instruments due to reverse cause increased as GWAS discovery sample size increased. Applying Steiger filtering reduced this to 25%. Consequently, the false discovery rates (FDR) for 12 of the 14 methods reduced substantially when applied using Steiger filtered instruments (Figure 1c). The true positive rates for the methods based on Steiger filtering did however reduce slightly for 10 of the 14 methods.
+
+
+### Mixture of experts method selection improves over any single method
+
+Following evidence that the Steiger filtering approach can improve on existing methods, we next hypothesised that a mixture of experts (MoE) model would be able to predict the most appropriate of the 14 MR methods and two instrument selection strategies (giving a total of 28 MR strategies) to apply to a particular summary-set based on its characteristics (Figure 2). 
+
+The ability to predict the performance for each of these methods is shown in Supplementary table 2. The prediction $R^2$ of whether a summary-set's status was truly null ($\beta_{xy}=0$) or non-null ($\beta_{xy} \neq 0$) against the method's prediction of the summary-set's status, ranged between 0.04 and 0.24. The method performance prediction was most effective for the Egger random effects model with Steiger filtering. The summary-set characteristics with the most importance for each of the predictors differed substantially between each summary-set, as well as the frequency for which each of the methods was selected in the testing summary-sets. The FDR of each method when chosen, compared to their averages across all summary-sets, reduced; and likewise the true positive rates of each method when chosen increased compared to their simulation-wide averages.
+
+We compared the MoE performance in the simulations against each of the 28 strategies, testing to see if it outperformed all other single strategies. Figures 3a and 3b show that the MoE approach had the best general performance. Estimating the area under the receiver operator curve gave 0.84 for the MoE approach in terms of classifying the simulations as being null or non-null. Notably, the next best methods were median and mode based estimators using Steiger filtering. But a crucial observation is that under the assumption of widespread and diverse pleiotropic effects it is clear that all methods suffer from high false discovery rates (Figure 3a), including the MoE approach.
+
+
+### Automated MR analysis of 2407 phenotypes reveals substantial horizontal pleiotropy
+
+We applied our analysis using summary data for 2407 phenotypes, including 149 complex traits and diseases, 575 metabolites [@Shin2014; @Kettunen2016] and 1683 plasma protein levels [@Sun2017]. For the protein levels only GWAS significant hits were available, so they could only be evaluated as exposure phenotypes. The complex traits and diseases and metabolite levels had complete summary data available obtained via MR-Base, and thus they could be evaluated as both exposures (if they had significant instruments) and outcomes. Together, we evaluated 715681 relationships. The majority of these associations could only be evaluated using fewer than 5 SNPs, and so the Wald ratio or IVW fixed effects methods were used, but for 61029 associations the MR-MoE approach was applied.
+
+There were 5660 associations following Bonferroni correction ($p < 7.0 \times 10^{-8}$). Of these 2918 were obtained from the MR-MoE analysis, while the remainder were estimated using fewer than 5 SNPs using the Wald ratio or IVW fixed effects methods. 
+
+The frequencies of the methods chosen by the MR-MoE analysis are shown in Supplementary table 3. Amongst those deemed 'significant', the IVW fixed effects analysis method combined with the top-hits instruments selection strategy (only valid when there is no detectable evidence of horizontal pleiotropy of any sort) was selected in only 10.4% of cases. This indicates that horizontal pleiotropy is likely to be pervasive.
+
+
+### Interpretation of the putative associations in a broad scan of phenotypes requires detailed follow up
+
+We performed a look up of associations between all traits and LDL cholesterol (as measured in the GLGC consortium [@Willer2013]), where the result had a false discovery rate of 0.05 using the MoE approach. This returned 287 putative associations, amongst which 111 involved LDL cholesterol influencing other traits and 176 involved other traits influencing LDL cholesterol. A large proportion of these traits were metabolites, which are dominated by lipid fractions. Filtering to exclude the metabolomic studies ([@Shin2014; @Kettunen2016]) returned 27 associations with 23 traits (Figure 4a). There was a strong association with coronary heart disease (0.41 log(OR) per SD, 0.31-0.52, $p=2.7\times10^{-12}$). Here the IVW random effects method was chosen after Steiger filtering, indicating the presence of horizontal pleiotropy being present amongst the instruments. 
+
+We also performed a look up of associations that causally influence years of schooling [@Okbay2016], or that years of schooling itself causally influences. Using a false-discovery rate of 0.05, 45 traits were returned as having some direction of causality with years of schooling (Figure 4b). Several of these putative relationships appear to be plausible, for example the influence of years of schooling on lower risk of Alzheimer's disease, which has recently been reported [@Anderson2017]. There is also a protective effect of more years of schooling on lower risk of myocardial infarction, which has been supported by detailed follow up analyses [@Tillmann2017]. 
+
+However, it is clear that there are limitations in relying on MR as a panacea for causal inference. For example, bi-directional causal relationships with college completion exist because of the similarity in trait definitions; and there are several traits (e.g. childhood intelligence and birth weight) which appear to be causally downstream of years of schooling despite this being temporally impossible. Though explanations could be conjured for this association, for example parents' schooling influences childhood intelligence, or the genetic instruments are shared across the two traits due to a third unmeasured trait, an intuitive interpretation of causality cannot be applied because the genetic instruments used proxy the liability to achieve some level of educational attainment, and not necessarily the experience of having attained a particular level of edication.
+
+The facility to perform these look ups has been automated in the MR of 'everything vs everything' (MR-EvE) web application, [http://eve.mrbase.org](http://eve.mrbase.org).
+
+
+## Discussion
+
+Motivated by a recent flurry of activity in MR methodology development, we have devised a machine learning approach, MR-MoE, that seeks to predict the performance of each MR method, selecting the one which is most likely to maximise power whilst minimising FDR for a specific summary-set. The mixture of experts approach that we present here is trained using random forest decision trees applied to extensive and diverse simulations, and we demonstrate that it makes substantial performance improvements over any other single method in the presence or absence of extensive horizontal pleiotropy. As such, our method contributes to the field of meta-learning but also to the rapidly growing field of automatic model selection and hyper-parameter optimization in machine learning [@kotthoff2016auto]. We applied the method to the curated set of GWAS summary data present in MR-Base [@Hemani2016], generating several million MR estimates. MR-MoE selected a method that indicated some pattern of horizontal pleiotropy for almost 90% of cases, reinforcing the notion that it is the rule rather than the exception. 
+
+The trend of increasing GWAS sample sizes continues, but while the opportunity that this affords MR to be furnished with more instruments is typically welcomed, here we have demonstrated that it is invalid instruments, exhibiting horizontal pleiotropy or reverse causation, that may be more likely to be identified than valid ones. Strategising how MR is to be used in practice, therefore, must consider some presence of horizontal pleiotropy to be the rule rather than the exception. Instrumental variables in MR are typically chosen blind, with GWAS significance being the only criterion. We illustrated how confounders and reverse causal associations can easily lead to invalid instrument selection in MR and that most randomly generated patterns of horizontal pleiotropy cannot be adequately accounted for by any single MR method. 
+
+Methods have been introduced recently that seek to improve MR estimates through invalid instrument detection and removal [@Corbin2016; @Verbanck2017; @Zhu2017]. These attack the problem from the perspective that variants which have a relatively large influence on the causal estimate, or provide substantially different estimates from the other variants, are likely to be exhibiting horizontal pleiotropy, and their removal from the analysis may be warranted. A potential drawback of this approach is that the outlier SNPs in a summary-set might be the only reliable ones. This could arise, for example, for the *CRP* variant instrumenting C-reactive protein levels [@Prins2016], because CRP itself is downstream of many cellular functions and most GWAS signals will not be specific for the trait. Steiger filtering has attempted to sidestep this issue in removing invalid instruments, seeking to detect those instruments which have associations with the outcome that are too large to be consistent with the exposure causing the outcome. We acknowledge that unmeasured confounding and measurement error can introduce problems with Steiger filtering [@Hemani2017], but note that our simulations indicate that all individual MR methods improve in performance following its application.
+
+In addition to horizontal pleiotropy, there are many other limitations that prevent MR from being a panacea for causal inference. Many of the associations are biologically impossible, for example where early life phenotypes appear to be influenced by later stage phenotypes. Such associations can be explained statistically because the instruments proxy the liability for that particular phenotype, not that phenotype's observed manifestation. Though these associations can be informative, their interpretations as causal relationships are far from clear. Similarly, often disease traits appear to causally relate to other phenotypes, but GWAS of disease is typically performed on the liability scale, hence the causal estimate reflects not the presence or absence of disease, but the underlying risk of disease. Again, interpretation of such associations can be problematic due to the instruments proxying disease liability and not diseae outcomes. 
+
+A large proportion of the associations were estimated using only a single instrumental variable, a circumstance in which cause, reverse cause or horizontal pleiotropy cannot be immediately distinguished. Though methods are emerging to attempt to delineate between models of reverse cause, pleiotropy and multiple causal variants in the same region [@Zhu2016; @Richardson2017], separating vertical from horizontal pleiotropy with a single instrument is not yet possible in the two-sample MR framework though the use of mediation-based approaches may be informative in the one-sample setting [@Wang2017; @Hemani2017]. 
+
+Other problems, in addition to horizontal pleiotropy, can also manifest. Frailty effects [@Aalen2015] could induce associations for late-onset traits, and often detailed modelling for how this can influence MR is warranted [@Noyce2017; @Anderson2017]. Genetic variants could strongly relate to several phenotypes, for example SNPs that influence LDL cholesterol are also likely to influence other lipid fractions, making it difficult to ascertain which amongst them is the true causal exposure [@Burgess2014a]. We see this issue manifesting in Figure 4, where there appear to be causal relationships between different lipid fractions. The measured feature for which genetic associations are known could relate in complicated ways to the biological entities that is truly causal [@DaveySmithHemani2014], for example higher circulating levels of the natural antioxidant extracellular superoxide dismutase (EC-SOD) appears to causally relate to higher risk of coronary heart disease [@Juul2003] because the phenotypic measure relates inversely to the EC-SOD levels in arterial walls, hence *in situ* activity is lower [@DaveySmithHemani2014]. Dynastic effects can also confound MR estimates, arising when the exposure trait in a previous generation influences the environment of the current generation. Here, the SNPs being used as instruments for the exposure will be associated with a potential confounder in the analysis [@VonHinke2016]. The associations depicted in Figure 4 involving educational attainment may be susceptible to bias arising from this mechanism, and protecting against it will likely require alternative study designs, for example by using sibling pairs.
+
+A new problem may arise when using machine learning approaches to infer the correct model for a particular summary-set, namely, that the model selection is data driven. This is liable to contribute to elevated type 1 error rates, even though we have attempted to separate the information used for optimisation from the information used to predict performance. One advantage to generating a method that consolidates across many methods is that it can prevent cherry picking the most appealing method based on their results. The extent to which a machine-based method selector incurs higher type 1 error rates more than a human selector is not clear. Though MR-MoE does exhibit higher type 1 error rates than are desirable, they still remain amongst the lowest compared to other MR methods that do not suffer from the issue of data driven model selection.
+
+In light of these issues, we emphasise that we do not consider the reporting of MR-MoE (or any other single MR method) to be seen as performing a Mendelian randomization study. Rather, it can be used to motivate further detailed follow up which should include sensitivity analyses [@Hemani2016], incorporating biological knowledge regarding instruments, and triangulation with other sources of evidence or experimental designs [@Lawlor2017]. Demanding a rigorous follow up of putative associations is also essential for avoiding issues that may arise due to cherry picking of MR results. This is especially important when a large repository of putative associations, such as MR-EvE, is made publicly available.
+
+The field of MR is evolving. The advent of GWAS databases [@Hindorff2010; @Staley2016] and automated 2SMR [@Hemani2016] has trivialised the analytical aspect of investigating specific causal hypotheses. Despite the limitations described above, the construction of a causal graph of 'everything versus everything' does have appeal. First, though causality is not guaranteed by MR, it can still be highly informative for supporting or negating specific hypotheses. Indeed, a well-powered MR that negates a hypothesis is likely less fallible to the pitfalls described above than using MR to confirm a positive association [@Vanderweele2014]. Second, it paves the way for new approaches to search for novel putative associations and improve reliability in single analyses. The potential to exploit GWAS summary data within the properties of graph databases to aid with both of these endeavours could be transformative in biological research.
+
+
+## Acknowledgements
+
+This work was supported by the UK Medical Research Council (MC_UU_12013/1, MC_UU_12013/8, MR/N501906/1); Cancer Research UK (C52724/A20138, C18281/A19169); and the SPHERE Interdisciplinary Research Collaboration funded by the UK Engineering and Physical Sciences Research Council under grant EP/K031910/1
+
+
+\newpage
+
+![](images/fig1.pdf)
+
+Figure 1: Simulations. a) Schematic of how GWAS with sufficient power can lead to the selection of instrumental variables that are invalid. We used arbitrary numbers of SNPs and confounders to simulate GWAS summary datasets. b) Any SNP that has a direct influence on the exposure, or an influence on a non-confounding intermediate variable, is considered a 'direct' effect. The y-axis shows the proportion of instruments selected for analysis that are either direct associations with the exposure, instruments for the outcome (reverse), or instruments for confounding traits (confounder). The proportions are compared over a range of different exposure discovery sample sizes (x-axis) and using either the top-hits approach (left) or the Steiger approach (right) for instrument selection. c) Top: The false discovery rates from null simulations for each of the 14 methods using either top-hits, Steiger filtered variants, or variants that are known to be directly associated with the exposure (oracle, note that direct effects can still exhibit horizontal pleiotropy in these simulations). Bottom: The statistical power to detect true causal associations in the non-null simulations.
+
+\newpage
+
+![](images/fig2.pdf)
+
+Figure 2: Mixture of experts. a) Training. Datasets are simulated that have either null or non-null causal relationships, and causal estimates are obtained from each of the 28 MR strategies considered in this study. In the toy datasets, the columns in black represent 53 metrics about each of the 67,000 training simulations. The columns in red are specific to each strategy, they represent how well that strategy performed in obtaining the correct answer for each of the datasets. Random forests are used to learn the parameter space of the 53 metrics in which a particular summary-set is likely to perform well. Together, this creates 28 random forest decision trees, one for each MR strategy. b) Application. For a GWAS summary dataset, our objective is to choose the strategy most likely to return the correct causal estimate. Metrics are generated from the dataset and fed into each of the 28 random forest decision trees. This provides us with 28 performance predictions. Finally, we use the strategy for which the performance prediction is highest.
+
+\newpage
+
+![](images/fig3.pdf)
+
+Figure 3: Performance of MoE against all other MR strategies. a) The power for non-null datasets is plotted against the FDR for null datasets for each of the 28 strategies, plus MoE. No single MR strategy achieved nominal FDR for these simulations. b) Calculating the area under the ROC curve from the values in (a) we plotted the performance in order from lowest to highest. Under the assumption of pervasive horizontal pleiotropy, the MoE approach is likely most effective than any other single MR strategy.
+
+
+\newpage
+
+![](images/fig4-01.png)
+
+Figure 4: Lookup of causal associations involving a) LDL cholesterol and b) Years of Schooling. In a) the nodes are filtered to not include those obtained from the metabolomic studies [@Shin2014; @Kettunen2016]. The arrows denote causal direction and the values on the arrows denote the causal effect estimate. Only those relationships are shown for which the $FDR < 0.05$.
+
+\newpage
+
+## Online methods
+
+### Steiger filtering
+
+An approach to inferring the causal direction between phenotypes recently developed [@Hemani2017] uses the following basic premise. If trait $A$ causes trait $B$ then $cor(g_{i}, A)^2 > cor(g_{i}, B)^2$ because the $cor(g_{i}, B)^2 = cor(A, B)^{2} cor(g_{i}, A)^{2}$. This will be true under most circumstances, but some parameters of measurement error or unmeasured confounding can lead to the inequality reversing direction, as has been explored previously [@Hemani2017].
+
+The Steiger test is applied to each variant in turn and we exclude any $g_{A}$ for which $cor(g_{i}, A)^2 > cor(g_{i}, B)^2$, indicating that it is unlikely to primarily associate with $B$ relative to $A$. Similarly, for SNPs that influence confounders of $A$ and $B$ or exhibit horizontal pleiotropy, the difference in $cor(g_{i}, A)^2$ and $cor(g_{i}, B)^2$ will be reduced, increasing the likelihood of the SNP being excluded because the Steiger Z-test is less likely to be significant. Hence we also exclude any $g_{A}$ for which the $cor(g, x)$ and $cor(g, y)$ are not significantly different at an arbitrary threshold of $p > 0.05$.
+
+To estimate $cor(g, x)^2$, if $x$ is continuous we obtain the F-statistic from the reported p-value and sample size and then $cor(g, x)^2 = \frac{F}{N - 2 - F}$. If $x$ is binary then we estimate the variance of the underlying liability explained by the SNP, $cor(g, x)^2 = \frac{V_a}{V_a + V_e}$. Here, $V_e = \pi^2/3$, and $V_a = 2\beta^2f(1-f)$, where $\beta$ is the log odds ratio and $f$ is the allele frequency of the SNP in the population [@Lee2013c]. $f$ can be estimated using the allele frequency of the SNP in an ascertained sample by deriving the $2 \times 2$ contingency table from the odds ratio $e^\beta$, allele frequency in the ascertained sample $f_{cc}$, and number of cases $N_1$ and controls $N_0$. A Z-score to test the hypothesis that $cor(g, x)$ and $cor(g, y)$ are significantly different can be generated using the Steiger test for correlated correlations.
+
+
+### Mixture of experts implementation for MR
+
+The mixture of experts approach seeks to use simulations to learn the circumstances in which each of the 28 MR strategies is likely to perform most accurately. Having trained the model on simulations, new summary-sets can be applied to obtain causal estimates from the strategy that is predicted to be the most reliable for that summary-set.
 
 **Training and testing simulations**
 
-The MoE is trained using datasets generated from simulations. A *dataset* is the minimum data required to perform 2SMR analysis - four columns comprising the SNP-exposure and SNP-outcome effects and standard errors, and rows corresponding to each SNP that is used as an instrument for the exposure. This *dataset* can be fed into any of the 28 experts to obtain MR causal effects. The simulations used to generate these datasets seek to cover a range of pleiotropic scenarios, including where some proportion of SNPs exhibit directional or balanced horizontal pleiotropy, or where SNPs influencing confounding variables.
+The MoE is trained using summary-sets generated from simulations (Figure 2a). Each *summary-set* can be fed into any of the 28 experts to obtain MR causal effects. The simulations used to generate these summary-sets seek to cover a range of pleiotropic scenarios, including where some proportion of SNPs exhibit directional or balanced horizontal pleiotropy, or where SNPs influence confounding variables.
 
-We simulate two individual level datasets for which there are $N_x$ and $N_y$ samples, and $M$ SNPs, where each SNP has effect allele frequency of $p_m \sim U(0.05, 0.95)$. These datasets are used to obtain the SNP effects for the exposure trait $x$ and the outcome trait $y$, respectively, using the following sampling criteria:
+We simulate two individual level datasets for which there are $N_x$ and $N_y$ samples, and $M$ SNPs, where each SNP has effect allele frequency of $f_m \sim U(0.05, 0.95)$. These datasets are used to obtain the SNP effects for the exposure trait $x$ and the outcome trait $y$, respectively, to create summary-sets, using the following sampling criteria:
 
 $$
 \begin{aligned}
@@ -124,7 +281,7 @@ $$
 \end{aligned}
 $$
 
-Some proportion $s_x \sim U(0,1)$ of $g_x$ SNPs and some proportion $s_y \sim U(0,1)$ of $g_y$ SNPs exhibit horizontal pleiotropy with effects sampled using
+Some proportion $floor(MS_{x}/M)$ of $g_x$ SNPs and $floor(MS_{y}/M)$ of $g_y$ SNPs, where $s_x$ and $s_y \sim U(0,1)$, exhibit horizontal pleiotropy with effects sampled using
 
 $$
 \begin{aligned}
@@ -164,86 +321,39 @@ $$
 \end{aligned}
 $$
 
-For each simulation we used linear regression to estimate the genetic effect of each SNP $M$ on $x$ in sample 1, and each SNP $M$ on $y$ in sample 2. We then perform MR analysis in both directions, retaining SNPs that have $p < 5e-8$ in sample 1 to perform MR of $x$ on $y$ (the true causal direction for non-null simulations), and retaining SNPs that have $p < 5e-8$ in sample 2 to perform MR of $y$ on $x$ (the reverse causal direction for non-null simulations). We treat the summary data (effect sizes and standard errors) used for estimating $x \rightarrow y$ the summary data used for estimating $y \rightarrow x$ as two separate datasets Hence, for each simulation two datasets are generated which are analysed to produce 28 MR estimates each. We performed 100,000 simulations using these parameters, resulting in 200,000 datasets.
-
-**Strategy**
-
-Figure 2a outlines the general strategy behind the MoE implementation. Briefly, we record 53 metrics about each dataset, hypothesising that we can use these metrics to predict the performance of each expert, given some optimisation criteria. For each method we train random forest decision trees  to predict that method's performance using the dataset's metrics. 
-
-Having generated random forest decision trees for each of the 28 methods using 133,000 of the simulations, we then applied them to the remaining 67,000 datasets to predict which method would have the highest performance for each of the remaining datasets. Finally we compare the performance of the method selected by the MoE against all remaining methods. The default settings for the `randomForest` package in R was used to train the models.
+For each simulation we used linear regression to estimate the genetic effect of each SNP $M$ on $x$ in sample 1, and each SNP $M$ on $y$ in sample 2. We then perform MR analysis in both directions, mimicking GWAS by retaining SNPs that have $p < 5e-8$ in sample 1 to perform MR of $x$ on $y$ (the true causal direction for non-null simulations), and retaining SNPs that have $p < 5e-8$ in sample 2 to perform MR of $y$ on $x$ (the reverse causal direction for non-null simulations). We treat the summary data (effect sizes and standard errors) used for estimating $x \rightarrow y$ the summary data used for estimating $y \rightarrow x$ as two separate summary-sets. Hence, for each simulation two summary-sets are generated which are analysed to produce 28 MR estimates each. We performed 100,000 simulations using these parameters, resulting in 200,000 summary-sets.
 
 **Optimisation function**
 
-We aim to maximise statistical power for datasets where $\beta_{x,y} \neq 0$ and minimise false discovery rates for datasets where $\beta_{x,y} = 0$. The random forest for a particular method $h(O_{w,d}, \textbf{z}_{d}$ is generated where the training set of input metrics for dataset $d$ is $\textbf{z}_{d}$ and the response is
+We aim to maximise statistical power for summary-sets where $\beta_{x,y} \neq 0$ and minimise false discovery rates for summary-sets where $\beta_{x,y} = 0$. To train random forest decision trees to predict performance for a particular method $h(O_{w,d}, \textbf{z}_{d})$ is generated where the training set of input metrics for summary-set $d$ is $\textbf{z}_{d}$ and the response (optimisation function) is
 
 $$
     O_{w,d} = 
 \begin{cases}
-    1,   & \text{if } \beta_{x,y} \neq 0 \text{and } p_{m,d} < 0.01\\
-    1,   & \text{if } \beta_{x,y} = 0 \text{and } p_{m,d} > 0.1 \\
+    1,   & \text{if } \beta_{x,y} \neq 0 \text{ and } p_{m,d} < 0.01\\
+    1,   & \text{if } \beta_{x,y} = 0 \text{ and } p_{m,d} > 0.1 \\
     0,   & \text{otherwise}
 \end{cases}
 $$
 
-### Graph database of MR estimates
-
-The set of MR estimates obtained from this analysis are recorded in a Neo4j graph database. Because each association has up to 28 different estimates, for simplicity we distill this down to a single 'best estimate' for each association using the following rules:
-
-1. If the number of variants after Steiger filtering is greater than 5 then apply the MoE to obtain the best method
-2. If the number of variants after Steiger filtering is less than or equal to 5 but greater than 1 then use the IVW random effects approach on the filtered set of variants
-3. If there is 1 variant retained in the Steiger approach then use the Wald ratio on the remaining variant
-4. If there are no variants remaining after Steiger filtering then declare no causal association.
-
-For specific hypotheses we strongly recommend that estimates from all sensitivity analyses are scrutinised and reported.
+where $p_{m,d}$ is the p-value for method $m$ on summary-set $d$.
 
 
-## Results
+**Strategy**
 
-### Steiger filtering improves reliability
+For each training summary-set we record a set of 53 metrics $\textbf{z}_{d}$ (Supplementary table 3), and an outcome $O_{w,d}$, which is a measure of how well that method performed for each particular simulated summary-set. For each of our 28 MR strategies, we need to create a model that predicts the performance of the strategy based on metrics generated from a summary-set. To do this, for each strategy we train a random decision forest to predict that strategy's performance using the summary-set's metrics. The random forest approach is well suited to this problem because there are likely to be non-continuous combinations of different metrics that improve on prediction over, for example, a simple linear model that does not learn about interactions. 
 
-As statistical power for GWAS studies improves the likelihood of a significant association being discovered that doesn't act primarily on the trait of interest increases (Figure 1a). We evaluated the efficacy of the Steiger filtering approach for improving instrument selection using 100,000 simulated datasets comprising both null and non-null causal models. For each dataset instruments were selected based on the tophits strategy and the Steiger filtering strategy, and MR was performed using 14 different methods based on instruments selected from each of these strategies.
+As a simple hypothetical example - if a summary-set exhibits a single outlier but is otherwise exhibiting no heterogeneity then the following methods could arguably perform well:
 
-Figure 1b shows that the tophits strategy led to 49% of the instruments being primarily associated with either confounders or the outcome phenotype, not the exposure phenotype. Applying Steiger filtering reduced this to 25%. Consequently, the false discovery rates (FDR) for 12 of the 14 methods reduced substantially when applied using Steiger filtered instruments (Figure 1c). The true positive rates for the methods based on Steiger filtering did however reduce slightly for 10 of the 14 methods.
+- an IVW fixed effects analysis with Steiger filtering, should the Steiger test be able to detect the outlier
+- a median based approach without Steiger filtering
+- a mode based approach without Steiger filtering
 
+deciding between these strategies requires finding, in general, which will minimise false discovery rates and maximise true positive rates for that particular scenario. In this example the IVW with Steiger filtering would likely be the clear winner because of its superior statistical power. Countless other scenarios could arise. For example if 100% of instruments are invalid but the InSIDE assumptio is met then the MR-Egger is likely to be most effective; if 40% of instruments are invalid then a median-based approach is likely most effective; and if 80% of instruments are invalid then a mode-based approach is likely most effective.
 
-### Mixture of experts method selection improves over any single method
+Having generated random forest decision trees for each of the 28 strategies using 133,000 of the simulations, we then applied them to the remaining 67,000 summary-sets to predict which method would have the highest performance for each of the remaining summary-sets. Finally we compare the performance of the method selected by the MoE against all remaining strategies. The default settings for the `randomForest` package in R [@Liaw2002] were used to train the models. MR-MoE 1.0 is implemented in the TwoSampleMR R package available at [github.com/MRCIEU/TwoSampleMR](https://github.com/MRCIEU/TwoSampleMR) [@Hemani2016].
 
-Following evidence that the Steiger filtering approach can improve on existing methods, we next hypothesised that a mixture of experts (MoE) model would be able to use dataset characteristics to predict the most appropriate of the 28 MR methods and instrument selection strategies (Figure 2a). 
-
-The ability to predict the performance for each of these methods is shown in table 1, with prediction $R^2$ ranging between 0.04 and 0.24. The dataset characteristics with the most importance for each of the predictors differed substantially between each dataset, as well as the frequency for which each of the methods was selected in the testing datasets. The FDR of each method when chosen, compared to their averages across all datasets, reduced; and likewise the true positive rates of each method when chosen increased compared to their simulation-wide averages.
-
-We compared the MoE performance in the simulations against each of the 28 methods, testing to see if it outperformed all other single methods. Figures 2b and 2c show that the MoE approach had the best general performance, obtaining an AUC of 0.84 in terms of classifying the simulations as being null or non-null. Notably, the next best methods were median and mode based estimators using Steiger filtering. Under the assumption of universal pleiotropy it is clear that all methods suffer from very high false discovery rates.
-
-
-### A first draft of the causal map of the human phenome
-
-It is important to note that though the gating function should be applicable to datasets of any distribution of characteristics, the frequencies of chosen methods are relative to the characteristics of the simulated datasets, and would not necessarily be the same frequencies observed empirically. Applying the MoE model to the X number of MR associations for which there was sufficient data, we found that 
-
-How many associations reach nominal or FDR corrected significance
-How many bi-directional associations
-How many associations could be declared for a causal chain of 2
-
-## Discussion
-
-- Limitations of MR that cannot be addressed without biological information
-    + Impossible causal associations
-    + Temporal effects
-    + Risk liability etc
-    + Single variants
-- Further developments required to improve causal estimates
-- The use of causal chains to improve power
-- Repository will continually update - need to time stamp and provide access to older associations
-
-
-## Figures
-
-\newpage
-
-![](images/fig1.pdf)
-
-\newpage
-
-![](images/fig2.pdf)
 
 ## References
 
+\raggedright
