@@ -214,7 +214,7 @@ write.csv(snp_trait, file="../results/01/upload/snp_trait.csv", row.names=FALSE,
 
 ntt <- 8
 
-for(i in 5:ntt)
+for(i in 1:4)
 {
 	message(i)
 	load(paste0("../results/01/mr/mc-", i, ".rdata"))
@@ -244,4 +244,4 @@ cmd <- paste0(
 " --relationships:GA ../results/01/upload/snp_trait.csv", 
 " --relationships:MR ../results/01/upload/trait_trait.csv"
 )
-system(cmd)
+# system(cmd)
