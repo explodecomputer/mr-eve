@@ -1,49 +1,16 @@
 library(tidyverse)
-library(data.table)
+library(TwoSampleMR)
+library(MRInstruments)
 
-ao <- read_csv("../data/ao.csv")
-ids <- scan("../results/02/ids.txt")
+## Soma scan proteins
 
-outcome_nodes <- subset(ao, 
-	id %in% ids |
-	author == "Shin" |
-	author == "Kettunen"
-	) %>% 
-	dplyr::select(id, trait, pmid, author, consortium, category, subcategory, EFO, EFO_id, match, sample_size, ncase, ncontrol, unit, sd) 
-outcome_nodes$id <- as.character(outcome_nodes$id)
+data(mrbase_instruments)
+exposure_dat <- mrbase_instruments
+ao <- available_outcomes()
 
 
-som <- read_tsv("../data/soma.txt")
-som$sample_size <- 3301
-som$author <- "Sun"
-som$category <- "SOMA"
-som$sd <- 1
-som$unit <- "SD"
+nodes <- subset(ao, id %in% exposure_dat$id.exposure) %>% 
+	dplyr::select(id, trait, pmid, author, consortium, category, subcategory, sample_size, ncase, ncontrol, unit, sd) 
+nodes$id <- as.character(nodes$id)
 
-soma_nodes <- filter(som, !duplicated(`SOMAmer ID`)) %>%
-	dplyr::select(
-		id=`SOMAmer ID`, 
-		trait=Target,
-		sample_size,
-		author,
-		category,
-		unit,
-		sd
-	)
-
-
-# a <- fread("../data/2012-12-21-CisAssociationsProbeLevelFDR0.5.txt")
-# westra_nodes <- filter(a, !duplicated(ProbeName) & PValue < 5e-5)
-
-
-# b <- filter(a, PValue < 5e-5 & !duplicated()) %>%
-# 	arrange(PValue) %>%
-# 	filter(!duplicated(ProbeName))
-# fr <- fread("westrasnps.txt.frq")
-
-
-
-nodes <- bind_rows(outcome_nodes, soma_nodes)
-
-
-save(nodes, file="../results/02/nodes.rdata")
+save(nodes, file="../results/03/nodes.rdata")

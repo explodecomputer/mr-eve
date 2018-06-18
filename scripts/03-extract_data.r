@@ -11,7 +11,7 @@ try_extract_outcome <- function(SNP, id, tries=3)
 	while(class(out) == 'try-error' & i <= tries)
 	{
 		message("trying iteration ", i)
-		out <- try(extract_outcome_data(SNP, id, proxies=FALSE))
+		out <- try(extract_outcome_data(SNP, id, proxies=FALSE, splitsize=10000))
 		i <- i + 1
 	}
 	return(out)
@@ -19,7 +19,7 @@ try_extract_outcome <- function(SNP, id, tries=3)
 
 ###
 
-ds <- "02"
+ds <- "03"
 
 load(paste0("../results/", ds, "/nodes.rdata"))
 load(paste0("../results/", ds, "/exposure_dat.rdata"))
@@ -31,29 +31,25 @@ filt <- function(temp)
 	return(temp)
 }
 
-# load("../results/01/outcome_nodes.rdata")
-# load("../results/01/exposure_dat.rdata")
-
 snps <- unique(exposure_dat$SNP)
-# for(i in 1:nrow(nodes))
-for(i in 32)
+for(i in 1:nrow(nodes))
 {
 	j <- nodes$id[i]
-	message(i," of ", nrow(outcome_nodes), ": ", j)
+	message(i," of ", nrow(nodes), ": ", j)
 	snpsneed <- snps
-	out <- paste0("../data/results/02/interim/interim-", j, ".rdata")
+	out <- paste0("../results/03/interim/interim-", j, ".rdata")
 	if(file.exists(out))
 	{
 		message("Loading previous version")
 		load(out)
 		snpsgot <- unique(temp$SNP)
 		snpsneed <- snps[!snps %in% snpsgot]
-		temp2 <- try_extract_outcome(snpsneed, outcome_nodes$id[i])
+		temp2 <- try_extract_outcome(snpsneed, nodes$id[i])
 		temp2 <- filt(temp2)
 		temp <- rbind(temp, temp2)
 	} else {
 		message("No previous record")
-		temp <- try_extract_outcome(snps, outcome_nodes$id[i])
+		temp <- try_extract_outcome(snps, nodes$id[i])
 		temp <- filter(temp, mr_keep.outcome) %>%
 			select(id.outcome, SNP, effect_allele.outcome, other_allele.outcome, eaf.outcome, beta.outcome, se.outcome, pval.outcome, samplesize.outcome, ncase.outcome, ncontrol.outcome)
 	}
