@@ -12,5 +12,5 @@ ao <- available_outcomes()
 nodes <- subset(ao, id %in% exposure_dat$id.exposure) %>% 
 	dplyr::select(id, trait, pmid, author, consortium, category, subcategory, sample_size, ncase, ncontrol, unit, sd) 
 nodes$id <- as.character(nodes$id)
-
+nodes$type <- "eo"
 save(nodes, file="../results/03/nodes.rdata")
