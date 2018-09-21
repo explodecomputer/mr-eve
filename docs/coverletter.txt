@@ -1,0 +1,15 @@
+Dear Editor
+ 
+We are delighted to submit our manuscript, "Automating Mendelian randomization through machine learning to construct a putative causal map of the human phenome" as an Article to Nature Genetics.
+ 
+Increasingly, the results from genome wide association studies are being used to infer causal relationships between phenotypes using Mendelian randomization. While this approach has great potential, correctly distinguishing between horizontal and vertical pleiotropy remains a problem that needs addressing. In this work, we tackle this issue by applying machine learning and causal modelling to the largest collection of GWAS summary data to date. We achieve the following major goals:
+ 
+Improve causal inference between human phenotypes using only GWAS summary data. We build upon a large body of methods developed in the fields of epidemiology, econometrics and meta-analysis, using machine learning to generate an ensemble method. Combined with a novel outlier detection method, our approach substantially outperforms existing methods in terms of power and reliability.
+Use the method to construct a putative causal map of the human phenome. This map is open source and comprises 2407 disease, complex trait and molecular phenotypes at present, making it the largest known repository of putative causal relationships. It will continue to grow rapidly as new GWAS summary data and causal inference methods become available.
+Our causal map opens completely new avenues of research, and here we have exploited it to understand the nature of pleiotropy. We are particularly excited about this because due to the scale of the map, and the ability to distinguish between different forms of pleiotropy, a major finding is that horizontal pleiotropy is present amongst almost 90% of pairs of human traits for which there exists a putative causal relationship.
+ 
+We believe that together our method and the putative causal map will be of benefit several fields of research related to genetics, from hypothesis-driven epidemiological research to large scale genotype-phenotype modelling.
+ 
+Yours sincerely
+ 
+Gibran Hemani, George Davey Smith and Tom Gaunt on behalf of all authors

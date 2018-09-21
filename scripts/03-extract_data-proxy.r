@@ -32,12 +32,14 @@ filt <- function(temp)
 }
 
 snps <- unique(exposure_dat$SNP)
+snpdat <- data_frame(SNP=snps)
+
 for(i in 1:nrow(nodes))
 {
 	j <- nodes$id[i]
 	message(i," of ", nrow(nodes), ": ", j)
 	snpsneed <- snps
-	out <- paste0("../results/03/interim2/interim-", j, ".rdata")
+	out <- paste0("../results/03/extract/outcome-", j, ".rdata")
 	if(file.exists(out))
 	{
 		message("Loading previous version")
@@ -52,7 +54,9 @@ for(i in 1:nrow(nodes))
 		temp <- try_extract_outcome(snps, nodes$id[i])
 		temp <- filter(temp, mr_keep.outcome) %>%
 			select(id.outcome, SNP, effect_allele.outcome, other_allele.outcome, eaf.outcome, beta.outcome, se.outcome, pval.outcome, samplesize.outcome, ncase.outcome, ncontrol.outcome)
+		outcome_dat <- merge(temp, snpdat, by="SNP", all=TRUE)
+		outcome_dat$id.outcome <- nodes$id[i]
 	}
-	save(temp, file=out)
+	save(outcome_dat, file=out)
 }
 
