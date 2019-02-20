@@ -1,5 +1,6 @@
 import os.path
 import re
+import subprocess
 
 # Define some variables
 # REF = '../reference/1000g_filtered/data_maf0.01_rs_snps'
@@ -9,21 +10,11 @@ GWASDIR = '../gwas-files'
 INSTRUMENTLIST = "instruments.txt"
 
 
-# configfile: 'config.json'
+subprocess.call("Rscript scripts/get_ids.r", shell=True)
+subprocess.call("Rscript scripts/get_genes.r", shell=True)
+subprocess.call("wget -O data/rf.rdata https://www.dropbox.com/s/5la7y38od95swcf/rf.rdata?dl=0", shell=True)
 
-# Find all the initial study files
-ID = [ name for name in os.listdir(GWASDIR) if 
-	os.path.isdir(os.path.join(GWASDIR, name)) and 
-	os.path.isfile(os.path.join(GWASDIR, name, 'data.bcf')) ]
-# ID1 = list(filter(lambda x: re.search('^UKB-a', x), ID))
-# ID2 = list(filter(lambda x: re.search('^[0-9]', x), ID))
-# ID = ID1 + ID2
-# ID = ['2', '7']
-# ID = ID[1:10]
-
-with open("idlist.txt", "wt") as f:
-	for id in ID:
-		f.write("%s\n" % id)
+ID = [line.strip() for line in open("data/idlist.txt", 'r')]
 
 
 # Create a rule defining all the final files
