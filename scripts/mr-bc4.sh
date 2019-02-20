@@ -16,7 +16,7 @@ if [ -n "${1}" ]; then
 fi
 
 i=${SLURM_ARRAY_TASK_ID}
-i=$((i + 1000))
+# i=$((i + 1000))
 
 
 GWASDIR='../gwas-files'
@@ -41,7 +41,3 @@ fi
 
 
 time Rscript scripts/mr.r --idlist $IDLIST --gwasdir $GWASDIR --id $id --rf $RF --what eve --out $OUTPUT --threads $THREADS --idinfo $IDINFO
-
-
-R --no-save --args --idlist $IDLIST --gwasdir $GWASDIR --id $id --rf $RF --what eve --out $OUTPUT --threads $THREADS --idinfo $IDINFO
-
