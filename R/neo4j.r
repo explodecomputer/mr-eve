@@ -58,3 +58,70 @@ modify_rel_headers_for_neo4j <- function(x, id1, id1name, id2, id2name)
 	names(x)[id2_col] <- paste0(":END_ID(", id2name, ")")
 	return(x)
 }
+
+#' Write out to csv.gz, split to make more manageable files
+#'
+#' @param obj <what param does>
+#' @param splitsize <what param does>
+#' @param prefix <what param does>
+#' @param id1 <what param does>
+#' @param id1name <what param does>
+#' @param id2=NULL <what param does>
+#' @param id2name=NULL <what param does>
+#'
+#' @export
+#' @return
+write_split <- function(obj, splitsize, prefix, id1, id1name, id2=NULL, id2name=NULL)
+{
+	splitnum <- round(length(mr) / splitsize)
+	splits <- split(1:length(mr), 1:splitnum)
+	nsplit <- length(splits)
+	filenames <- paste0(prefix, 1:nsplit, ".csv.gz")
+	lapply(1:length(splits), function(x)
+	{
+		message(x, " of ", length(splits))
+		temp <- bind_rows(obj[splits[[x]]])
+		if(is.null(id2))
+		{
+			temp <- modify_node_headers_for_neo4j(temp, id1, id1name)
+		} else {
+			temp <- modify_rel_headers_for_neo4j(temp, id1, id1name, id2, id2name)
+		}
+		gz1 <- gzfile(filenames[x], "w")
+		if(x == 1)
+		{
+			write.csv(temp, file=gz1, row.names=FALSE, na="")
+		} else {
+			write.csv(temp, file=gz1, row.names=FALSE, na="", col.names=FALSE)
+		}
+		close(gz1)
+	})
+	return(paste(filenames, collapse=","))
+}
+
+#' Wrapper to write out files
+#'
+#' <full description>
+#'
+#' @param obj <what param does>
+#' @param filename <what param does>
+#' @param id1 <what param does>
+#' @param id1name <what param does>
+#' @param id2=NULL <what param does>
+#' @param id2name=NULL <what param does>
+#'
+#' @export
+#' @return
+write_simple <- function(obj, filename, id1, id1name, id2=NULL, id2name=NULL)
+{
+	if(is.null(id2))
+	{
+		temp <- modify_node_headers_for_neo4j(obj, id1, id1name)
+	} else {
+		temp <- modify_rel_headers_for_neo4j(obj, id1, id1name, id2, id2name)
+	}
+	gz1 <- gzfile(filename, "w")
+	write.csv(temp, file=gz1, row.names=FALSE, na="")
+	close(gz1)
+	return(filename)
+}

@@ -35,3 +35,66 @@ Snakefile applied to those new files.
 5. perform analysis on extracted data PARALLEL
 6. update inventory
 7. upload to neo4j
+
+
+## Snakemake
+
+
+Configure to run on cluster using `bc4-cluster.json`:
+
+```
+{
+        "__default__" :
+        {
+                "partition": "mrcieu",
+                "nodes": "1",
+                "ncpu": "1",
+                "ntask": "1",
+                "time": "0:30:00",
+                "mem": "10G",
+                "output": "logs/{wildcards.id}.out"
+        }
+}
+```
+
+Ideally output would actually be `logs/{rule}.{wildcards.id}.out` but I don't think slurm likes really long long file names?
+
+In principle this should then run from the root directory
+
+```
+mkdir logs
+snakemake -pr \
+-j 500 \
+--cluster-config bc4-cluster.json \
+--cluster "sbatch \
+  --partition={cluster.partition} \
+  --nodes={cluster.nodes} \
+  --ntasks-per-node={cluster.ntask} \
+  --cpus-per-task={cluster.ncpu} \
+  --time={cluster.time} \
+  --mem={cluster.mem} \
+  --output={cluster.output}"
+```
+
+On bc4 it has to run in the background, like in screen for example. To test that it is submitting 
+
+```
+snakemake --cluster-config bc4-cluster.json \
+--cluster "echo \
+  '--partition={cluster.partition} \
+  --nodes={cluster.nodes} \
+  --ntasks-per-node={cluster.ntask} \
+  --cpus-per-task={cluster.ncpu} \
+  --time={cluster.time} \
+  --mem={cluster.mem} \
+  --output={cluster.output}' && " --jobs 1
+```
+
+What `--cluster` does is just append the argument in front of the command that is being run. So the above will just run the job without sending to the cluster, and instead printing what it would send to the cluster.
+
+## To do
+
+At the moment a lot is hard coded. Need to make it flexible such that new incoming data leads to a separate instance of the whole pipeline, with the new IDs determining how things are run
+
+Also, need to copy across any new elastic files and update bcf directory
+

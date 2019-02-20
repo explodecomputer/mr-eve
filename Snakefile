@@ -65,5 +65,13 @@ rule mr:
 
 # Step 5: Create neo4j files
 
+rule neo4j:
+	input:
+		'{GWASDIR}/{id}/derived/instruments/mr.rdata'
+	output:
+		''
+	shell:
+		'Rscript scripts/prepare_neo4j.r'
+
 # Step 6: Upload neo4j
 
