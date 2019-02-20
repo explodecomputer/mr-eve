@@ -38,9 +38,9 @@ get_rsq <- function(dat, logor_outcome)
 	return(dat)
 }
 
-ds <- "01"
+ds <- "03"
 
-load(paste0("../results/", ds, "/outcome_nodes.rdata"))
+load(paste0("../results/", ds, "/nodes.rdata"))
 load(paste0("../results/", ds, "/exposure_dat.rdata"))
 
 exposure_dat$units.exposure[is.na(exposure_dat$units.exposure)] <- "SD"
@@ -75,10 +75,12 @@ exposure_dat$rsq.exposure[ind2] <- get_r_from_pn(
 )^2
 
 
+outcome_nodes <- nodes
 for(i in 1:nrow(outcome_nodes))
 {
 	message(i, ": ", outcome_nodes$id[i])
-	load(paste0("../data/results/01/interim-", outcome_nodes$id[i], ".rdata"))
+	load(paste0("../results/",ds,"/extract/outcome-", outcome_nodes$id[i], ".rdata"))
+	temp <- outcome_dat
 	temp$other_allele.outcome[temp$other_allele.outcome == ""] <- NA
 	act <- ifelse(all(is.na(temp$other_allele.outcome)), 1, 2)
 	d <- suppressMessages(harmonise_data(exposure_dat, temp, action=act))
@@ -94,6 +96,6 @@ for(i in 1:nrow(outcome_nodes))
 	d$steiger_dir <- as.logical(sign(st$z))
 	d$steiger_pval <- st$p
 
-	save(d, file=paste0("../results/01/dat/dat-", outcome_nodes$id[i], ".rdata"))
+	save(d, file=paste0("../results/",ds,"/dat/dat-", outcome_nodes$id[i], ".rdata"))
 }
 
