@@ -1,76 +1,37 @@
-1. Select traits
-2. Get instruments for traits
-3. Extract SNPs from outcomes
-4. Harmonise data
-5. Perform MR
-6. Upload to neo4j
+# MR-EVE
 
-7. Add new traits
-    - add to existing traits
-    - get instruments and find unique instruments
-    - extract all outcome SNPs for new trait, and new instruments from other traits
-    - harmonise data
-    - perform MR
-    - upload to neo4j
+Create a lower-triangular matrix of all results.
 
+- `A-B` is allowed
+- `A-A` is not
+- `B-A` is not
 
+## Results that need to be generated
 
+Genetic associations
+- Instruments for traits
+- All trait instruments extracted from each trait
 
-## 
+MR results
+- Store a bi-directional MR result. 
 
-need two files
+## Programming strategy
 
-- node information
-- mr estimates
-- heterogeneity stats
-- 
+We want to be able to easily update as new studies come in. To do this, we have to avoid duplicating previous results, while storing new results effectively. We can either re-do everything anytime new data comes along, and keep it simply structured; or have a complex structure with an inventory of results on top.
 
+Opting for the latter to allow more agile updating.
 
+Use a sqlite database of analyses that have been run - this is the 'inventory'. The inventory is there to record what results have been generated.
 
+If we want to generate more results we can put forth trait A and trait B candidates, then query the inventory to get a list of trait pairs that need to be run.
 
+This generates two files - trait pairs to be run, and a unique trait list. They are generated in a new slice.
 
-neo4j
-
-to run in background:
-
-docker run -d --publish=7474:7474 --volume=$HOME/neo4j/data:/data neo4j:2.3
-docker exec -i -t neo4j:2.3 /bin/bash
-
-
-./neo4j-import \
---into mr-eve.db \
---id-type string \
---nodes:gene ../data/upload/genes.csv \
---nodes:snp ../data/upload/snps.csv \
---nodes:trait ../data/upload/traits.csv \
---relationships:GS ../data/upload/gene_snp.csv \
---relationships:GA ../data/upload/snp_trait.csv \
---relationships:MR ../data/upload/trait_trait.csv
-
-
-
-
-
-
-
-
-
-
-
-the paper
-
-the causal map of the human phenome: a first draft
-
-- intro
-    - methods and data enable faster causal inference
-    - hypothesis driven analysis should use all methods to scrutinise
-    - we can precalculate these estimates but automation requires a number of things still
-        - instrument selection using steiger test
-        - method selection using linear discriminant analysis
-    - here we introduce a comprehensive analysis of 150 traits, introducing two ways for automating instrument selection and method selection
-
-- results
-    - created graph
-    - steiger method simulations
-    - method selection simulations
-
+Snakefile applied to those new files.
+1. clump traits A and B if necessary PARALLEL
+2. get unique SNPs SINGLE
+3. check instrument list - what new ones need to be obtained SINGLE
+4. extract updated instrument list from traits A and B PARALLEL
+5. perform analysis on extracted data PARALLEL
+6. update inventory
+7. upload to neo4j
