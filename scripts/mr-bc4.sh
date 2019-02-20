@@ -18,22 +18,30 @@ fi
 i=${SLURM_ARRAY_TASK_ID}
 i=$((i + 1000))
 
-cd ${HOME}/mr-eve/mr-eve
-ids=($(cat idlist))
 
-echo ${#ids[@]}
+GWASDIR='../gwas-files'
+OUTPUT="$GWASDIR/$id/derived/instruments/mr.rdata"
+IDLIST="resources/idlist.txt"
+IDINFO="resources/idinfo.rdata"
+RF="resources/rf.rdata"
+THREADS="10"
+
+cd ${HOME}/mr-eve/mr-eve
+ids=($(cat $IDLIST))
+
+echo "Total number of ids: ${#ids[@]}"
 id=`echo ${ids[$i]}`
-echo $id
+echo "Analysing $id"
 if [ -z "$id" ]
 then
 	echo "outside range"
 	exit
 fi
 
-GWASDIR='../gwas-files'
-output="$GWASDIR/$id/derived/instruments/mr.rdata"
 
 
-Rscript scripts/mr.r --idlist idlist --gwasdir $GWASDIR --id $id --rf rf.rdata --what triangle --out $output --threads 10
+time Rscript scripts/mr.r --idlist $IDLIST --gwasdir $GWASDIR --id $id --rf $RF --what eve --out $OUTPUT --threads $THREADS --idinfo $IDINFO
 
+
+R --no-save --args --idlist $IDLIST --gwasdir $GWASDIR --id $id --rf $RF --what eve --out $OUTPUT --threads $THREADS --idinfo $IDINFO
 

@@ -4,7 +4,7 @@
 \alias{readml}
 \title{Read in extracted data format}
 \usage{
-readml(filename)
+readml(filename, ao, format = "TwoSampleMR")
 }
 \arguments{
 \item{filename}{filename e.g. ml.csv.gz}

@@ -1,98 +1,154 @@
+# Make trait, snp and gene nodes
+library(mreve)
 library(tidyverse)
-
-modify_node_headers_for_neo4j <- function(x, id, idname)
-{
-	id_col <- which(names(x) == id)
-	cl <- sapply(x, class)
-	for(i in 1:length(cl))
-	{
-		if(cl[i] == "integer")
-		{
-			names(x)[i] <- paste0(names(x)[i], ":INT")
-		}
-		if(cl[i] == "numeric")
-		{
-			names(x)[i] <- paste0(names(x)[i], ":FLOAT")
-		}
-	}
-	names(x)[id_col] <- paste0(idname, "Id:ID(", idname, ")")
-	return(x)
-}
-
-modify_rel_headers_for_neo4j <- function(x, id1, id1name, id2, id2name)
-{
-	id1_col <- which(names(x) == id1)
-	id2_col <- which(names(x) == id2)
-	cl <- sapply(x, class)
-	for(i in 1:length(cl))
-	{
-		if(cl[i] == "integer")
-		{
-			names(x)[i] <- paste0(names(x)[i], ":INT")
-		}
-		if(cl[i] == "numeric")
-		{
-			names(x)[i] <- paste0(names(x)[i], ":FLOAT")
-		}
-	}
-	names(x)[id1_col] <- paste0(":START_ID(", id1name, ")")
-	names(x)[id2_col] <- paste0(":END_ID(", id2name, ")")
-	return(x)
-}
-
-get_gene <- function(dat, chrname, posname, radius=10000)
-{
-	# https://www.biostars.org/p/167818/
-	# source("https://bioconductor.org/biocLite.R")
-	# biocLite("Homo.sapiens")
-	require(Homo.sapiens)
-	require(dplyr)
-	
-	mycoords.gr <- data_frame(chrom=dat[[chrname]], start=dat[[posname]]-10000, end=dat[[posname]]+10000) %>% 
-	makeGRangesFromDataFrame
-
-	mycoords.gr <- mergeByOverlaps(genes(TxDb.Hsapiens.UCSC.hg19.knownGene), mycoords.gr)
-	mycoords.gr <- data.frame(gene_id=mycoords.gr$gene_id, gr=mycoords.gr$mycoords.gr, stringsAsFactors=FALSE) %>% as_data_frame
-
-	mycoords.gr <- inner_join(mycoords.gr, as.data.frame(org.Hs.egSYMBOL), by="gene_id")
-	mycoords.gr$pos <- mycoords.gr$gr.start + 10000
-
-	dat <- right_join(
-		subset(mycoords.gr, select=c(gr.seqnames, pos, symbol, gene_id)), 
-		dat, 
-		by=c("gr.seqnames"=chrname, "pos"=posname))
-
-	return(dat)
-}
-
-ucsc_get_position <- function(snp)
-{
-	snp <- paste(snp, collapse="', '")
-	require(RMySQL)
-	message("Connecting to UCSC MySQL database")
-	mydb <- dbConnect(MySQL(), user="genome", dbname="hg19", host="genome-mysql.cse.ucsc.edu")
-
-	query <- paste0(
-		"SELECT * from snp144 where name in ('", snp, "');"
-	)
-	message(query)
-	out <- dbSendQuery(mydb, query)
-	d <- fetch(out, n=-1)
-	# dbClearResult(dbListResults(mydb)[[1]])
-	dbDisconnect(mydb)
-	return(d)
-
-}
+library(data.table)
+library(GenomicRanges)
 
 
 ## Nodes
-# - Traits
-# - SNPs
-# - Genes
+
+# read instrument list
+variants <- fread("resources/instruments.txt", header=FALSE) %>% as_tibble()
+names(variants) <- c("chr", "pos", "ref", "alt", "build", "rsid")
+variants$chr <- as.character(variants$chr)
+write.csv(modify_node_headers_for_neo4j(variants, "rsid", "variant"), file="resources/neo4j_stage/variants.csv", row.names=FALSE, na="")
+
+# Traits
+load("resources/idlist.rdata")
+idlist <- idlist %>% dplyr:: select(-c(access, mr, file, filename, path))
+write.csv(modify_node_headers_for_neo4j(idlist, "id", "bgcid"), file="resources/neo4j_stage/traits.csv", row.names=FALSE, na="")
+
+# Genes
+load("resources/genes.rdata")
+genesgr <- subset(genesgr, !duplicated(ensembl_gene_id)) %>% as_tibble()
+names(genesgr)[1] <- "chr"
+genesgr$chr <- as.character(genesgr$chr)
+write.csv(modify_node_headers_for_neo4j(genesgr, "ensembl_gene_id", "ensembl_gene_id"), file="resources/neo4j_stage/genes.csv", row.names=FALSE, na="")
+
 
 ## Relationships
-# - SNP-Gene
-# - SNP-Trait
+
+
+# - Variant-Gene
+# Add 500kb region around each gene
+load("resources/genes.rdata")
+genesgr <- subset(genesgr, !duplicated(ensembl_gene_id)) %>% as_tibble()
+genesgr$origstart <- genesgr$start
+genesgr$start <- pmax(0, genesgr$start - 500000)
+genesgr$end <- genesgr$end + 500000
+genesgr$width <- genesgr$end - genesgr$start + 1
+genesgr <- GRanges(genesgr)
+vars <- GRanges(variants$chr, IRanges(start=variants$pos, end=variants$pos), rsid = variants$rsid)
+a <- findOverlaps(vars, genesgr) %>% as_tibble
+b <- bind_cols(vars[a$queryHits,] %>% as_tibble(), genesgr[a$subjectHits,] %>% as_tibble())
+b$tss_dist <- abs(b$start - b$origstart)
+vg <- tibble(ensembl_gene_id = b$ensembl_gene_id, variant = b$rsid, tss_dist = b$tss_dist)
+write.csv(modify_rel_headers_for_neo4j(vg, "ensembl_gene_id", "ensembl_gene_id", "variant", "variant"), file="resources/neo4j_stage/gene-variant.csv", row.names=FALSE, na="")
+
+
+# - variant-Trait
+vt <- list()
+vtinst <- list()
+for(i in 1:nrow(idlist))
+{
+	x <- idlist$id[i]
+	message(x, " - ", i, " of ", nrow(idlist))
+	a <- readml(file.path("../gwas-files", x, "derived/instruments/ml.csv.gz"), idlist, format="none")
+	a$bgcid <- x
+	vt[[i]] <- subset(a, select=c(SNP, bgcid, beta, se, pval, eaf, samplesize, ncase, ncontrol))
+	vtinst[[i]] <- subset(vt[[i]], a$instrument)
+	vt[[i]]$proxy <- !is.na(a$proxy_chr)
+}
+
+vt <- bind_rows(vt)
+gz1 <- gzfile("resources/neo4j_stage/variant-trait.csv.gz", "w")
+write.csv(modify_rel_headers_for_neo4j(vt, "SNP", "variant", "bgcid", "bgcid"), file=gz1, row.names=FALSE, na="")
+close(gz1)
+
+vtinst <- bind_rows(vtinst)
+write.csv(modify_rel_headers_for_neo4j(vtinst, "SNP", "variant", "bgcid", "bgcid"), file="resources/neo4j_stage/instrument-trait.csv", row.names=FALSE, na="")
+
+
+# mr
+# mrmoe
+# mrhet
+# mrintercept
+# metrics
+
+mr <- list()
+mrmoe <- list()
+mrhet <- list()
+mrintercept <- list()
+metrics <- list()
+for(i in 1:nrow(idlist))
+{
+	x <- idlist$id[i]
+	message(x, " - ", i, " of ", nrow(idlist))
+	load(file.path("../gwas-files", x, "derived/instruments/mr.rdata"))
+
+	estimates <- lapply(scan, function(x) x$estimates) %>% bind_rows
+
+	if("MOE" %in% names(estimates))
+	{
+		estimates <- dplyr::select(estimates, -c(method2, steiger_filtered, outlier_filtered))
+	} else {
+		estimates$selection <- "Tophits"
+		estimates$selection[estimates$steiger_filtered & estimates$outlier_filtered] <- "DF + HF"
+		estimates$selection[!estimates$steiger_filtered & estimates$outlier_filtered] <- "HF"
+		estimates$selection[estimates$steiger_filtered & !estimates$outlier_filtered] <- "DF"
+		estimates <- estimates %>% dplyr::select(-c(steiger_filtered, outlier_filtered))
+		estimates$MOE <- 0
+		ind <- estimates$method %in% c("Wald ratio", "FE IVW", "Steiger null") & estimates$selection == "DF"
+		estimates$MOE[ind] <- 1
+	}
+	names(estimates)[names(estimates) == "MOE"] <- "moescore"
+	mr[[i]] <- estimates
+
+	mrmoe[[i]] <- group_by(estimates, id.exposure, id.outcome) %>% 
+	filter(moescore == max(moescore)) %>% dplyr::slice(1)
+
+	het <- lapply(scan, function(x) x$heterogeneity) %>% bind_rows
+	het$selection <- "Tophits"
+	het$selection[het$steiger_filtered & het$outlier_filtered] <- "DF + HF"
+	het$selection[!het$steiger_filtered & het$outlier_filtered] <- "HF"
+	het$selection[het$steiger_filtered & !het$outlier_filtered] <- "DF"
+	het <- het %>% dplyr::select(-c(steiger_filtered, outlier_filtered))
+	names(het)[names(het) == "Q"] <- "q"
+	mrhet[[i]] <- het
+
+	intercept <- lapply(scan, function(x) x$directional_pleiotropy) %>% bind_rows
+	intercept$selection <- "Tophits"
+	intercept$selection[intercept$steiger_filtered & intercept$outlier_filtered] <- "DF + HF"
+	intercept$selection[!intercept$steiger_filtered & intercept$outlier_filtered] <- "HF"
+	intercept$selection[intercept$steiger_filtered & !intercept$outlier_filtered] <- "DF"
+	intercept <- intercept %>% dplyr::select(-c(steiger_filtered, outlier_filtered))
+	mrintercept[[i]] <- intercept
+
+	met <- lapply(scan, function(x) x$info) %>% bind_rows
+	met$selection <- "Tophits"
+	met$selection[met$steiger_filtered & met$outlier_filtered] <- "DF + HF"
+	met$selection[!met$steiger_filtered & met$outlier_filtered] <- "HF"
+	met$selection[met$steiger_filtered & !met$outlier_filtered] <- "DF"
+	met <- met %>% dplyr::select(-c(steiger_filtered, outlier_filtered))
+	metrics[[i]] <- met
+}
+
+
+mrmoe <- bind_rows(mrmoe)
+gz1 <- gzfile("resources/neo4j_stage/variant-trait.csv.gz", "w")
+write.csv(modify_rel_headers_for_neo4j(vt, "SNP", "variant", "bgcid", "bgcid"), file=gz1, row.names=FALSE, na="")
+close(gz1)
+
+mr <- bind_rows(mr)
+mrhet <- bind_rows(mrhet)
+mrintercept <- bind_rows(mrintercept)
+metrics <- bind_rows(metrics)
+
+
+
+
+
+
 # - Trait-Trait
 
 load("../results/01/outcome_nodes.rdata")
