@@ -1,4 +1,3 @@
-biocLite("biomaRt")
 library(biomaRt)
 library(dplyr)
 library(GenomicRanges)
