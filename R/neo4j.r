@@ -73,8 +73,8 @@ modify_rel_headers_for_neo4j <- function(x, id1, id1name, id2, id2name)
 #' @return
 write_split <- function(obj, splitsize, prefix, id1, id1name, id2=NULL, id2name=NULL)
 {
-	splitnum <- round(length(mr) / splitsize)
-	splits <- split(1:length(mr), 1:splitnum)
+	splitnum <- ceiling(length(obj) / splitsize)
+	splits <- split(1:length(obj), 1:splitnum)
 	nsplit <- length(splits)
 	filenames <- paste0(prefix, 1:nsplit, ".csv.gz")
 	lapply(1:length(splits), function(x)
@@ -90,9 +90,9 @@ write_split <- function(obj, splitsize, prefix, id1, id1name, id2=NULL, id2name=
 		gz1 <- gzfile(filenames[x], "w")
 		if(x == 1)
 		{
-			write.csv(temp, file=gz1, row.names=FALSE, na="")
+			write.table(temp, file=gz1, row.names=FALSE, na="", sep=",")
 		} else {
-			write.csv(temp, file=gz1, row.names=FALSE, na="", col.names=FALSE)
+			write.table(temp, file=gz1, row.names=FALSE, na="", col.names=FALSE, sep=",")
 		}
 		close(gz1)
 	})
@@ -121,7 +121,7 @@ write_simple <- function(obj, filename, id1, id1name, id2=NULL, id2name=NULL)
 		temp <- modify_rel_headers_for_neo4j(obj, id1, id1name, id2, id2name)
 	}
 	gz1 <- gzfile(filename, "w")
-	write.csv(temp, file=gz1, row.names=FALSE, na="")
+	write.table(temp, file=gz1, row.names=FALSE, na="", sep=",")
 	close(gz1)
 	return(filename)
 }

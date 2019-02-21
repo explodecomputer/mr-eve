@@ -60,6 +60,7 @@ for(i in 1:nrow(idinfo))
 	x <- idinfo$id[i]
 	message(x, " - ", i, " of ", nrow(idinfo))
 	a <- readml(file.path("../gwas-files", x, "derived/instruments/ml.csv.gz"), idinfo, format="none")
+	a <- subset(a, SNP %in% vars$rsid)
 	a$bgcid <- x
 	vt[[i]] <- subset(a, select=c(SNP, bgcid, beta, se, pval, eaf, samplesize, ncase, ncontrol))
 	vtinst[[i]] <- subset(vt[[i]], a$instrument)
@@ -68,7 +69,7 @@ for(i in 1:nrow(idinfo))
 
 vtfiles <- write_split(vt, 200, "resources/neo4j_stage/vt", "SNP", "variant", "bgcid", "bgcid")
 vtinst <- bind_rows(vtinst)
-vtinstfile <- write_split("resources/neo4j_stage/instruments.csv.gz", "SNP", "variant", "bgcid", "bgcid")
+vtinstfile <- write_simple(vtinst, "resources/neo4j_stage/instruments.csv.gz", "SNP", "variant", "bgcid", "bgcid")
 
 
 # mr
@@ -88,21 +89,27 @@ for(i in 1:nrow(idinfo))
 	message(x, " - ", i, " of ", nrow(idinfo))
 	load(file.path("../gwas-files", x, "derived/instruments/mr.rdata"))
 
-	estimates <- lapply(scan, function(x) x$estimates) %>% bind_rows
+	estimates <- lapply(scan, function(x) {
+		if(is.null(x$estimates)) return(NULL)
+		estimates <- x$estimates
+		if("MOE" %in% names(estimates))
+		{
+			estimates <- dplyr::select(estimates, -c(method2, steiger_filtered, outlier_filtered))
+		} else {
+			estimates$selection <- "Tophits"
+			estimates$selection[estimates$steiger_filtered & estimates$outlier_filtered] <- "DF + HF"
+			estimates$selection[!estimates$steiger_filtered & estimates$outlier_filtered] <- "HF"
+			estimates$selection[estimates$steiger_filtered & !estimates$outlier_filtered] <- "DF"
+			estimates <- estimates %>% dplyr::select(-c(steiger_filtered, outlier_filtered))
+			estimates$MOE <- 0
+			ind <- estimates$method %in% c("Wald ratio", "FE IVW", "Steiger null") & estimates$selection == "DF"
+			estimates$MOE[ind] <- 1
+		}
+		estimates
+	}) %>% bind_rows
+	if(nrow(estimates) == 0)
+		next
 
-	if("MOE" %in% names(estimates))
-	{
-		estimates <- dplyr::select(estimates, -c(method2, steiger_filtered, outlier_filtered))
-	} else {
-		estimates$selection <- "Tophits"
-		estimates$selection[estimates$steiger_filtered & estimates$outlier_filtered] <- "DF + HF"
-		estimates$selection[!estimates$steiger_filtered & estimates$outlier_filtered] <- "HF"
-		estimates$selection[estimates$steiger_filtered & !estimates$outlier_filtered] <- "DF"
-		estimates <- estimates %>% dplyr::select(-c(steiger_filtered, outlier_filtered))
-		estimates$MOE <- 0
-		ind <- estimates$method %in% c("Wald ratio", "FE IVW", "Steiger null") & estimates$selection == "DF"
-		estimates$MOE[ind] <- 1
-	}
 	names(estimates)[names(estimates) == "MOE"] <- "moescore"
 	mr[[i]] <- estimates
 
@@ -110,29 +117,38 @@ for(i in 1:nrow(idinfo))
 	filter(moescore == max(moescore)) %>% dplyr::slice(1)
 
 	het <- lapply(scan, function(x) x$heterogeneity) %>% bind_rows
-	het$selection <- "Tophits"
-	het$selection[het$steiger_filtered & het$outlier_filtered] <- "DF + HF"
-	het$selection[!het$steiger_filtered & het$outlier_filtered] <- "HF"
-	het$selection[het$steiger_filtered & !het$outlier_filtered] <- "DF"
-	het <- het %>% dplyr::select(-c(steiger_filtered, outlier_filtered))
-	names(het)[names(het) == "Q"] <- "q"
-	mrhet[[i]] <- het
+	if(nrow(het) > 0)	
+	{
+		het$selection <- "Tophits"
+		het$selection[het$steiger_filtered & het$outlier_filtered] <- "DF + HF"
+		het$selection[!het$steiger_filtered & het$outlier_filtered] <- "HF"
+		het$selection[het$steiger_filtered & !het$outlier_filtered] <- "DF"
+		het <- het %>% dplyr::select(-c(steiger_filtered, outlier_filtered))
+		names(het)[names(het) == "Q"] <- "q"
+		mrhet[[i]] <- het
+	}
 
 	intercept <- lapply(scan, function(x) x$directional_pleiotropy) %>% bind_rows
-	intercept$selection <- "Tophits"
-	intercept$selection[intercept$steiger_filtered & intercept$outlier_filtered] <- "DF + HF"
-	intercept$selection[!intercept$steiger_filtered & intercept$outlier_filtered] <- "HF"
-	intercept$selection[intercept$steiger_filtered & !intercept$outlier_filtered] <- "DF"
-	intercept <- intercept %>% dplyr::select(-c(steiger_filtered, outlier_filtered))
+	if(nrow(intercept) > 0)
+	{
+		intercept$selection <- "Tophits"
+		intercept$selection[intercept$steiger_filtered & intercept$outlier_filtered] <- "DF + HF"
+		intercept$selection[!intercept$steiger_filtered & intercept$outlier_filtered] <- "HF"
+		intercept$selection[intercept$steiger_filtered & !intercept$outlier_filtered] <- "DF"
+		intercept <- intercept %>% dplyr::select(-c(steiger_filtered, outlier_filtered))		
+	}
 	mrintercept[[i]] <- intercept
 
 	met <- lapply(scan, function(x) x$info) %>% bind_rows
-	met$selection <- "Tophits"
-	met$selection[met$steiger_filtered & met$outlier_filtered] <- "DF + HF"
-	met$selection[!met$steiger_filtered & met$outlier_filtered] <- "HF"
-	met$selection[met$steiger_filtered & !met$outlier_filtered] <- "DF"
-	met <- met %>% dplyr::select(-c(steiger_filtered, outlier_filtered))
-	metrics[[i]] <- met
+	if(nrow(met) > 0)
+	{
+		met$selection <- "Tophits"
+		met$selection[met$steiger_filtered & met$outlier_filtered] <- "DF + HF"
+		met$selection[!met$steiger_filtered & met$outlier_filtered] <- "HF"
+		met$selection[met$steiger_filtered & !met$outlier_filtered] <- "DF"
+		met <- met %>% dplyr::select(-c(steiger_filtered, outlier_filtered))
+		metrics[[i]] <- met
+	}
 }
 
 mrfiles <- write_split(mr, 200, "resources/neo4j_stage/mr", "id.exposure", "bgcid", "id.outcome", "bgcid")
@@ -145,7 +161,7 @@ metricsfiles <- write_split(metrics, 200, "resources/neo4j_stage/metrics", "id.e
 
 
 cmd <- paste0(
-"~/neo4j-community-3.2.0/bin/neo4j-admin import", 
+"~/mr-eve/neo4j/neo4j-enterprise-3.5.3/bin/neo4j-admin import", 
 " --database mr-eve.db", 
 " --id-type string", 
 " --nodes:GENE ", genesfile, 
@@ -161,5 +177,5 @@ cmd <- paste0(
 " --relationships:METRICS ", metricsfiles
 )
 
-# system(cmd)
+system(cmd)
 

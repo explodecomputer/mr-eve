@@ -5,7 +5,7 @@
 #SBATCH --nodes=1 --cpus-per-task=10 --time=0-12:00:00
 #SBATCH --partition=mrcieu
 #SBATCH --output=job_reports/slurm-%A_%a.out
-#SBATCH --mem=20G
+#SBATCH --mem=15G
 
 echo "Running on ${HOSTNAME}"
 module add languages/r/3.4.4
@@ -18,19 +18,19 @@ fi
 i=${SLURM_ARRAY_TASK_ID}
 # i=$((i + 1000))
 
+cd ${HOME}/mr-eve/mr-eve
+
 
 GWASDIR='../gwas-files'
-OUTPUT="$GWASDIR/$id/derived/instruments/mr.rdata"
 IDLIST="resources/idlist.txt"
 IDINFO="resources/idinfo.rdata"
 RF="resources/rf.rdata"
 THREADS="10"
-
-cd ${HOME}/mr-eve/mr-eve
 ids=($(cat $IDLIST))
+id=`echo ${ids[$i]}`
+OUTPUT="$GWASDIR/$id/derived/instruments/mr.rdata"
 
 echo "Total number of ids: ${#ids[@]}"
-id=`echo ${ids[$i]}`
 echo "Analysing $id"
 if [ -z "$id" ]
 then

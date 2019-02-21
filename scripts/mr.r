@@ -46,6 +46,7 @@ load(args[["rf"]])
 param <- mreve::determine_analyses(id, idlist, newidlist, args[["what"]])
 
 a <- try(mreve::readml(filename, idinfo))
+glimpse(a$exposure_dat)
 if(nrow(a$exposure_dat) == 0)
 {
 	param <- subset(param, exposure != id)
@@ -61,17 +62,18 @@ if(nrow(param) == 0)
 scan <- parallel::mclapply(param$id, function(i)
 {
 	p <- subset(param, id == i)
+	message(p$id)
 	res <- try({
 		if(p$exposure == id)
 		{
 			b <- mreve::readml(file.path(args[["gwasdir"]], p$outcome, "derived/instruments/ml.csv.gz"), idinfo)
-			dat <- TwoSampleMR::harmonise_data(a$exposure_dat, b$outcome_dat)
+			dat <- suppressMessages(TwoSampleMR::harmonise_data(a$exposure_dat, b$outcome_dat))
 		} else {
 			b <- mreve::readml(file.path(args[["gwasdir"]], p$exposure, "derived/instruments/ml.csv.gz"), idinfo)
 			dat <- TwoSampleMR::harmonise_data(b$exposure_dat, a$outcome_dat)
 		}
-		res <- TwoSampleMR::mr_wrapper(dat)
-		res <- TwoSampleMR::mr_moe(res, rf)
+		res <- suppressMessages(TwoSampleMR::mr_wrapper(dat))
+		res <- suppressMessages(TwoSampleMR::mr_moe(res, rf))
 		rm(b,dat)
 		res
 	})
