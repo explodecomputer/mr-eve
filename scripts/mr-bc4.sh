@@ -10,24 +10,25 @@
 echo "Running on ${HOSTNAME}"
 module add languages/r/3.4.4
 
-if [ -n "${1}" ]; then
-  echo "${1}"
-  SLURM_ARRAY_TASK_ID=${1}
-fi
-
-i=${SLURM_ARRAY_TASK_ID}
-# i=$((i + 1000))
-
 cd ${HOME}/mr-eve/mr-eve
 
-
 GWASDIR='../gwas-files'
-IDLIST="resources/idlist.txt"
 IDINFO="resources/idinfo.rdata"
 RF="resources/rf.rdata"
 THREADS="10"
+IDLIST="resources/idlist.txt"
 ids=($(cat $IDLIST))
-id=`echo ${ids[$i]}`
+
+
+if [ -n "${1}" ]; then
+	echo "${1}"
+	id=$1
+else
+	i=${SLURM_ARRAY_TASK_ID}
+	# i=$((i + 1000))
+	id=`echo ${ids[$i]}`
+fi
+
 OUTPUT="$GWASDIR/$id/derived/instruments/mr.rdata"
 
 echo "Total number of ids: ${#ids[@]}"

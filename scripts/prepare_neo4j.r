@@ -104,6 +104,12 @@ for(i in 1:nrow(idinfo))
 			estimates$MOE <- 0
 			ind <- estimates$method %in% c("Wald ratio", "FE IVW", "Steiger null") & estimates$selection == "DF"
 			estimates$MOE[ind] <- 1
+			ind <- is.infinite(estimates$b)
+			estimates$b[ind] <- 0
+			estimates$se[ind] <- NA
+			estimates$ci_low[ind] <- NA
+			estimates$ci_upp[ind] <- NA
+			estimates$pval[ind] <- 1
 		}
 		estimates
 	}) %>% bind_rows
@@ -151,18 +157,20 @@ for(i in 1:nrow(idinfo))
 	}
 }
 
+mrhetfiles <- write_simple(mrhet, 200, "resources/neo4j_stage/mrhet", "id.exposure", "bgcid", "id.outcome", "bgcid")
+mrinterceptfiles <- write_simple(mrintercept, 200, "resources/neo4j_stage/mrintercept", "id.exposure", "bgcid", "id.outcome", "bgcid")
+mrmoefiles <- write_simple(mrmoe, "resources/neo4j_stage/mrmoe", "id.exposure", "bgcid", "id.outcome", "bgcid")
+metricsfiles <- write_simple(metrics, "resources/neo4j_stage/metrics", "id.exposure", "bgcid", "id.outcome", "bgcid")
 mrfiles <- write_split(mr, 200, "resources/neo4j_stage/mr", "id.exposure", "bgcid", "id.outcome", "bgcid")
-mrhetfiles <- write_split(mrhet, 200, "resources/neo4j_stage/mrhet", "id.exposure", "bgcid", "id.outcome", "bgcid")
-mrinterceptfiles <- write_split(mrintercept, 200, "resources/neo4j_stage/mrintercept", "id.exposure", "bgcid", "id.outcome", "bgcid")
-mrmoefiles <- write_split(mrmoe, 200, "resources/neo4j_stage/mrmoe", "id.exposure", "bgcid", "id.outcome", "bgcid")
-metricsfiles <- write_split(metrics, 200, "resources/neo4j_stage/metrics", "id.exposure", "bgcid", "id.outcome", "bgcid")
 
 
 
+
+system("rm -rf ~/mr-eve/neo4j/neo4j-enterprise-3.5.3/data/databases/graph.db")
 
 cmd <- paste0(
 "~/mr-eve/neo4j/neo4j-enterprise-3.5.3/bin/neo4j-admin import", 
-" --database mr-eve.db", 
+" --database graph.db", 
 " --id-type string", 
 " --nodes:GENE ", genesfile, 
 " --nodes:VARIANT ", variantsfile, 
@@ -176,6 +184,9 @@ cmd <- paste0(
 " --relationships:MRHET ", mrhetfiles,
 " --relationships:METRICS ", metricsfiles
 )
+
+
+print(cmd)
 
 system(cmd)
 
