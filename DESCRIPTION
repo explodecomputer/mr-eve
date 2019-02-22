@@ -1,4 +1,4 @@
-Package: mreve
+Package: makemreve
 Title: Functions for generating mreve
 Version: 0.1.0
 Authors@R: c(person("Gibran", "Hemani", email = "g.hemani@bristol.ac.uk",

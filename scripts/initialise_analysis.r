@@ -1,7 +1,7 @@
 stopifnot(basename(getwd()) == "mr-eve")
 
 
-library(mreve)
+library(makemreve)
 library(argparse)
 library(data.table)
 

@@ -1,2 +1,2 @@
-library(mreve)
+library(makemreve)
 setup_inventory()

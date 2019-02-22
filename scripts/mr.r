@@ -1,6 +1,6 @@
 suppressWarnings(suppressPackageStartupMessages({
 	library(TwoSampleMR)
-	library(mreve)
+	library(makemreve)
 	library(tidyverse)
 	library(car)
 	library(randomForest)

@@ -3,18 +3,18 @@ library(shiny)
 library(shinydashboard)
 
 
-graph <- startGraph("http://shark.epi.bris.ac.uk:7474/db/data", username="neo4j", password="123qwe")
+graph <- startGraph("http://shark.epi.bris.ac.uk:8474/db/data", username="neo4j", password="123qwe")
 
 
-browser_url <- "http://shark.epi.bris.ac.uk:7474/browser/"
+browser_url <- "http://shark.epi.bris.ac.uk:8474/browser/"
 
 # a <- getLabeledNodes(graph, "trait") # this is so slow
-# b <- getNodes(graph, "match(n:trait) return n")
+# b <- getNodes(graph, "match(n:TRAIT) return n")
 # nodes <- sapply(a, function(x) x$name)
-nodes <- cypher(graph, "match (n:trait) return n.name")$n.name
-snps <- cypher(graph, "match(n:snp) return n.name")$n.name
-consortia <- cypher(graph, "match (n:trait) return n.consortium")$n.consortium
-mrest <- cypher(graph, "match (n)-[r:MRB]-(m) return count(r) as count")$count
+nodes <- cypher(graph, "match (n:TRAIT) return n.trait")$n.trait
+snps <- cypher(graph, "match(n:VARIANT) return n.variantId")$n.variantId
+consortia <- cypher(graph, "match (n:TRAIT) return n.consortium")$n.consortium
+mrest <- cypher(graph, "match (n)-[r:MRMOE]-(m) return count(r) as count")$count
 
 
 load("outcome_nodes.rdata")
@@ -48,9 +48,9 @@ dashboardPage(
 				),
 				column(6,
 					infoBox(width=12, "Phenotypes", length(nodes), icon=icon("database")),
-					infoBox(width=12, "MR estimates", mrest, icon = icon("random")),
+					infoBox(width=12, "MR analyses", mrest, icon = icon("random")),
 					infoBox(width=12, "Instrumental variables", length(snps), icon=icon("database")),
-					infoBox(width=12, "MR methods", "29", icon=icon("cogs")),
+					infoBox(width=12, "MR methods", "45", icon=icon("cogs")),
 					infoBox(width=12, "GWAS consortia", length(unique(consortia)), icon=icon("globe"))
 				)
 			),

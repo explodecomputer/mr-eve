@@ -1,5 +1,5 @@
 # Make trait, snp and gene nodes
-library(mreve)
+library(makemreve)
 library(tidyverse)
 library(data.table)
 library(GenomicRanges)

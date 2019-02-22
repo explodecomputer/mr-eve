@@ -10,9 +10,9 @@ escape_quote <- function(text)
 get_query_trait <- function(graph, trait)
 {
 	query <- paste0("match 
-		(n:trait {name: '", escape_quote(trait), "'})
-		-[r:MRB]-
-		(m:trait)
+		(n:TRAIT {trait: '", escape_quote(trait), "'})
+		-[r:MR]-
+		(m:TRAIT)
 
 		return n,r,m order by r.P limit 200"
 	)
@@ -22,9 +22,9 @@ get_query_trait <- function(graph, trait)
 get_query_exposure_outcome <- function(graph, exposure, outcome)
 {
 	query <- paste0("match 
-		(g:gene)-[rg:GS]->(s:snp)-[rs:GA]->(n:trait {name: '", escape_quote(exposure), "'})
+		(g:GENE)-[rg:ANNOTATION]->(s:VARIANT)-[rs:INSTRUMENT]->(n:TRAIT {trait: '", escape_quote(exposure), "'})
 		-[r:MR]->
-		(m:trait {name: '", escape_quote(outcome), "'}) 
+		(m:TRAIT {trait: '", escape_quote(outcome), "'}) 
 		return n,r,m,rg,g,s,rs"
 	)
 	return(query)
@@ -33,18 +33,17 @@ get_query_exposure_outcome <- function(graph, exposure, outcome)
 get_table_exposure_outcome <- function(graph, exposure, outcome)
 {
 	query <- paste0("match 
-		(n:trait {name: '", escape_quote(exposure), "'})
+		(n:TRAIT {trait: '", escape_quote(exposure), "'})
 		-[r:MR]->
-		(m:trait {name: '", escape_quote(outcome), "'}) 
+		(m:TRAIT {trait: '", escape_quote(outcome), "'}) 
 		return
-		r.Method as Method, 
-		r.instruments as instruments,
+		r.method+' - '+r.selection as Method, 
 		r.nsnp as nsnp,
-		r.Estimate as Estimate, 
-		r.SE as SE,
-		r.CI_low as CI_low,
-		r.CI_upp as CI_upp,
-		r.P as P"
+		r.b as Estimate, 
+		r.se as SE,
+		r.ci_low as CI_low,
+		r.ci_upp as CI_upp,
+		r.pval as P"
 	)
 	return(cypher(graph, query))
 }
@@ -55,23 +54,23 @@ get_table_exposure_outcome <- function(graph, exposure, outcome)
 get_trait_scan <- function(graph, trait)
 {
 	query <- paste0("match 
-		(n:trait)
-		-[r:MRB]->
-		(m:trait)
+		(n:TRAIT)
+		-[r:MRMOE]->
+		(m:TRAIT)
 
-		where (n.name = '", escape_quote(trait), "' and m.name <> '", escape_quote(trait), "') or (m.name = '", escape_quote(trait), "' and n.name <> '", escape_quote(trait), "')
+		where (n.trait = '", escape_quote(trait), "' and m.trait <> '", escape_quote(trait), "') or (m.trait = '", escape_quote(trait), "' and n.trait <> '", escape_quote(trait), "')
 
 		return
 
-		n.name as Exposure,
-		m.name as Outcome,
-		r.Method as Method, 
+		n.trait as Exposure,
+		m.trait as Outcome,
+		r.method+' - '+r.selection as Method, 
 		r.nsnp as nsnp,
-		r.Estimate as Estimate, 
-		r.SE as SE,
-		r.CI_low as CI_low,
-		r.CI_upp as CI_upp,
-		r.P as P
+		r.b as Estimate, 
+		r.se as SE,
+		r.ci_low as CI_low,
+		r.ci_upp as CI_upp,
+		r.pval as P
 		order by P"
 	)
 	o <- cypher(graph, query)
@@ -84,9 +83,9 @@ get_trait_info <- function(graph, trait)
 	if(is.null(trait)) return(HTML(""))
 
 	query <- paste0("match
-		(n:trait {name: '", escape_quote(trait), "'})
+		(n:TRAIT {trait: '", escape_quote(trait), "'})
 		return
-		n.name as name,
+		n.trait as name,
 		n.category as category,
 		n.subcategory as subcategory,
 		n.EFO as EFO,
@@ -125,7 +124,7 @@ get_trait_info <- function(graph, trait)
 
 server <- function(input, output) { 
 
-graph <- startGraph("http://shark.epi.bris.ac.uk:7474/db/data", username="neo4j", password="123qwe")
+graph <- startGraph("http://shark.epi.bris.ac.uk:8474/db/data", username="neo4j", password="123qwe")
 
 output$basic_exposure_info <- renderUI(get_trait_info(graph, input$basic_exposure))
 output$basic_outcome_info <- renderUI(get_trait_info(graph, input$basic_outcome))
