@@ -1,0 +1,116 @@
+Dear Gib,
+
+Your Article "Automating Mendelian randomization through machine learning to construct a putative causal map of the human phenome" has now been seen by two referees. You will see from their comments below that, while they find your work of considerable interest, they have raised some important points. We are interested in the possibility of publishing your study in Nature Genetics, but we would like to consider your response to these points in the form of a revised manuscript before we make a final decision on publication.
+
+To guide the scope of the revisions, the editors discuss the referee reports in detail within the team, including with the chief editor, with a view to identifying key priorities that should be addressed in revision and sometimes overruling referee requests that are deemed beyond the scope of the current study. In this case, we ask that you incorporate your proposed responses to Reviewer #1 as previously outlined, present additional examples using real data sets as requested by Reviewer #2, and address all technical queries with appropriate revisions and clarifications. We hope that you will find this prioritized set of referee points to be useful when revising your study. Please do not hesitate to get in touch if you would like to discuss these issues further.
+
+We therefore invite you to revise your manuscript taking into account all reviewer and editor comments. Please highlight all changes in the manuscript text file. At this stage we will need you to upload a copy of the manuscript in MS Word .docx or similar editable format.
+
+We are committed to providing a fair and constructive peer-review process. Do not hesitate to contact us if there are specific requests from the reviewers that you believe are technically impossible or unlikely to yield a meaningful outcome.
+
+When revising your manuscript:
+
+* Include a “Response to referees” document detailing, point-by-point, how you addressed each referee comment. If no action was taken to address a point, you must provide a compelling argument. This response will be sent back to the referees along with the revised manuscript.
+
+* If you have not done so already please begin to revise your manuscript so that it conforms to our Article format instructions, avaliable here. Refer also to any guidelines provided in this letter.
+
+* Include a revised version of any required reporting checklist (available at: http://www.nature.com/authors/policies/checklist.pdf). It will be available to referees (and, potentially, statisticians) to aid in their evaluation if the manuscript goes back for peer review. A revised checklist is essential for re-review of the paper.
+
+Please use the link below to submit your revised manuscript and related files:
+
+http://mts-ng.nature.com/cgi-bin/main.plex?el=A5G6QR3A6BMdK6J1A9ftdgLP58JuwkmYhug94NiqwZ
+
+Note: This URL links to your confidential home page and associated information about manuscripts you may have submitted, or that you are reviewing for us. If you wish to forward this email to co-authors, please delete the link to your homepage.
+
+We hope to receive your revised manuscript within 4-8 weeks. If you cannot send it within this time, please let us know.
+
+Please do not hesitate to contact me if you have any questions or would like to discuss these revisions further.
+
+Nature Genetics is committed to improving transparency in authorship. As part of our efforts in this direction, we are now requesting that all authors identified as ‘corresponding author’ on published papers create and link their Open Researcher and Contributor Identifier (ORCID) with their account on the Manuscript Tracking System (MTS), prior to acceptance. This applies to primary research papers only. ORCID helps the scientific community achieve unambiguous attribution of all scholarly contributions. You can create and link your ORCID from the home page of the MTS by clicking on ‘Modify my Springer Nature account’. For more information please visit please visit www.springernature.com/orcid.
+
+We look forward to seeing the revised manuscript and thank you for the opportunity to review your work.
+
+Sincerely,
+Kyle
+
+
+Kyle Vogan, PhD
+Senior Editor
+Nature Genetics
+https://orcid.org/0000-0001-9565-9665
+
+
+Referee expertise:
+
+Referee #1: Complex trait genetics, statistics, Mendelian randomization
+
+Referee #2: Complex trait genetics, statistics, Mendelian randomization
+
+
+Reviewers' Comments:
+
+Reviewer #1:
+Remarks to the Author:
+
+The authors generated a graph with millions of causal estimates using two-step Mendelian randomization. The results are stored in a graph database. Unfortunately, the value of the database is limited as even stated by the authors "we ... raise caution throughout ...". For the reviewer, it is therefore difficult to judge how important the findings are.
+
+The work is novel and comprehensive. However, as pointed out under A, its significance is unclear to the reviewer.
+
+The reviewer has a couple of methodological concerns and questions.
+
+First, the authors state twice (in the manuscript and in the supplement) the formula Cor(g_i,B)^2 = Cor(A,B)^2 \times Cor(g_i,A)^2. The authors do not provide a reference. However, this result is most likely not true, in general. For example, Vos 2009 Int J Math Educat Sci Technol (DOI: 10.1080/00207390802419578) stated the following general result for three random variables A, B and C: r_AC = r_AB \times r_BC \pm \sqrt (1 - r_AB^2) sqrt(1 - r_BC^2).
+
+Second, in the opinion of the reviewer, the terminology "horizontal pleiotropy" and "vertical pleiotropy" is not fully adequate. Specifically, if the assumptions underlying Mendelian randomization are fulfilled, then, for a gene G, a risk factor R and an outcome O, G is not pleiotropic on O because it is mediated through R. In other words, it has an indirect effect.
+
+Third, the authors state that a second data set after p < E-8 is required for effect estimation. However, the reviewer has missed the point that this approach has been followed in the simulation study. Furthermore, it is unclear whether independent data sets have always been used for effect estimation after the initial GWAS. Phrased differently, it is not clear whether the available effect estimates are not affected by the winner's curse.
+
+Fourth, the reviewer was unable to understand the random forest approach. Did the authors formally compare the performance of the 28 different Mendelian randomization strategies per bootstrap draw? The authors should consider using subsampling for the random forest approach to avoid biases in the analyses. In addition, the authors should consider the use of conditional inference forests to avoid selection bias. Finally, the reviewer stresses that random forests are not fully able to identify interactions because random forests rely on a hierarchical model (B after A).
+
+Fifth, and most importantly, it is unclear to the reviewer whether the paths really reflect causality. For example, Figure 4a displays the network for LDL. The authors display on the right hand side overweight, waist circumference, BMI and obesity. These traits are highly correlated, and it is unclear whether LDL has an effect on all of these traits or whether some of the weight traits are just consequences of others. It also remains unclear why other weight-related traits do not show up. One such example is waist-to-hip ratio.
+
+It is therefore unclear to the reviewer whether the results are valid.
+
+Finally, the reviewer would like to stress that it the article was challenging to read. For example, the first sentence of the Introduction already includes the term vertical pleiotropy. The concept is described in the first paragraph. However, it may be discouraging for many researchers to read an opening sentence in an article which they most likely do not understand. In fact, I as reviewer was unable to understand the first paragraph until I had read Box 1. In addition, several sentences are quite long and have more than 40 words. Sometimes, the language is not direct. One example is "The extent of this phenomenon is not to be understated, ...". The authors should keep in mind that not all readers of the journal are native English English speakers.
+
+
+
+Reviewer #2:
+Remarks to the Author:
+
+The authors describe an automated ML approach to identify and apply the most appropriate model for causal inference given a particular summary set. Given the proliferation of MR methods and their very wide application in numerous publications, this is an important and timely piece of work, from a leading group of experts who have been instrumental to advancing the field. Understanding of which is the ‘best’ model/method for inferring causal estimates through MR is important and this paper makes a useful and important contribution to efforts to answer it, and to reduce opportunities for cherry-picking of the ‘best’ result. However, I have several comments and questions below for the consideration of the authors.
+
+General comments:
+
+The authors demonstrate the value of their approach using simulated data sets, which are described in detail in the online methods (I’d suggest a brief textual summary of the simulation parameters be included in the main text), but I think the value of the approach would be augmented with more discussion in the manuscript of relevant real examples. There are several examples where naïve application of MR is likely to bring the “wrong” result and which would be of interest to demonstrate here. For example, which models are selected for CRP to CHD and how do they relate to the latest understanding incorporating biological understanding and triangulation with other sources of evidence of experimental designs? Looking at the MR-Eve tool, it seems that they largely perform consistently with my understanding of causal relationships, but I think this would be important to demonstrate the value of this latest addition. Other examples like HDL cholesterol to CHD have been the
+subject of many papers and arguably more contentious and would be important to discuss using the ML approach. My read of the latest MR papers and indeed the trial data suggests a null effect but the MoE suggests potential for causality that would be good to discuss. Indeed, a set of real “known” causal and null results would be of real value to include.
+
+It would also be interesting to the general reader (and especially someone who wants to do MR) to have clearer individual examples of instrument sets where no (or very few) model was able to make the correct inference. I.e. is there some criteria (like number of instruments etc…) that one should apply to summary sets before even attempting any MR?
+
+Looking at ST1, it’s likely that there is considerable overlap in the samples in MR-Base. Certainly among complex traits, there is considerable overlap (BMI, lipids, glycaemia, chd, diabetes etc). I am not suggesting that the authors attempt to quantify the overlap, but think some mention over the influence of sample overlap (or at the extreme, the application of these methods in a 1-sample setting) is important – especially in the era of UK Biobank, where investigators will seek to apply these methods in a 1-sample setting, this is likely to be increasingly important.
+
+Is the approach of filtering invalid instruments differentially valuable when evaluating more complex exposures (e.g. BMI) than for “simpler” exposures (single gene or protein expression)? For example, one imagines there are far more pathways to influence BMI than to influence levels of RNA for a particular gene. Is there a risk that filtering will remove particular subsets of instruments influencing a particular component of BMI (energy intake, expenditure, components of adiposity etc)? Incidentally, I think the authors of ref 55 suggest such an instance would be a violation of the exclusion-restriction assumption.
+
+The only parameter in the ML that struck me as arbitrarily chosen was the minimum number of SNPs (5) required to initiate MR-MoE. I think this is quite an important detail. A significant number of real examples have < 5 SNP instruments (especially for ‘omic’ instruments, such as in the latest generation of pQTL papers). I think some discussion of the following questions would be helpful: Is there a difference in performance according to the number of instruments if you go above 5? Is it always better to have more? In fact, given the conclusion about the pervasiveness of horizontal pleiotropy is there some minimum number of instruments we should settle on? Perhaps Wald test MR on single instruments is fundamentally too unreliable – especially in the context of ‘mega-GWAS’ and the omnigenic hypothesis? The authors pretty much acknowledge this on page 9: ‘A large proportion of the associations were estimated using only a single instrumental variable, a circumstance in
+which cause, reverse cause or horizontal pleiotropy cannot be immediately distinguished.’ Given that this paper is likely to serve as a point of reference for MR approaches, and the authors discuss many caveats in some detail, discussing potential approaches to handle Wald estimates would be useful.
+
+The ML approach is well described and reasonable. The 53 parameters used to train the RFs are not really discussed in great detail in the main text. It would be interesting to see some discussion of how they were chosen and whether they are likely to result in a full description of the meta-space described by the instrument sets. Also what was the importance of each feature in model selection is not really discussed.
+
+Related to that, largely given the work of the authors, many in the field are familiar with the diagnostics that come with analyses in MR-Base. Some additional material in the supplement including some summary statistics or plots to show what the properties of example final simulated sets were would be helpful. I realise there is a degree of subjectivity to this, but showing examples where each of the different methods was applied would be reassuring to me. As mentioned above, that would be even more instructive using some “real” examples.
+
+From figure 3, should I understand that the MoE approach performs similarly to the simple mode approach? Does that suggest that simply applying the mode-based approaches would be almost as effective? Also, should I understand that simply applying the IVW fixed effects is almost no better than tossing a coin? Is that surprising?
+
+
+Specific questions/comments:
+
+For the Steiger filtering, is there any potential for differential sample size to bias the directions of effect? If so, are there approaches to combat this?
+
+I struggled to follow the message of Figure 1a – could the legend be expanded or more description be given in the text? “Oracle” is used but not introduced.
+
+Could the authors further describe the R2 statistics shown in ST2? Again, I couldn’t clearly follow what they were showing and why they were apparently so low.
+
+Fig 3: was it surprising that Egger-fixed had among the highest power? This seems counter to my previous observations. My previous experience of using Egger is that it is often underpowered and given it seems to be quite commonly selected (ST2), I’d be interested to see some real examples where it was chosen.
+
+“The frequencies of the methods chosen by the MR-MoE analysis are shown in Supplementary table 3.” – this doesn’t appear to be the case.
+
+The authors discuss the troublesome example of educational attainment predicting childhood intelligence, and mention duynastic effects earlier. Is the recent work of Kong and colleagues (pmid: 29371463) showing the effect of non-transmitted alleles on offspring traits of relevance here?
+
