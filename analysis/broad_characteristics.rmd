@@ -1,0 +1,81 @@
+---
+title: Broad characteristics
+author: Gibran Hemani
+date: 23/02/2019
+---
+
+
+```{r}
+library(mrever)
+connect()
+library(dplyr)
+library(data.table)
+library(knitr)
+library(ggplot2)
+
+traits <- get_traits()
+o <- list()
+for(i in 1:8)
+{
+	message(i)
+
+	a <- fread(paste0("zcat ../resources/neo4j_stage/mr", i, ".csv.gz"), he=i == 1, sep=",")
+	if(i != 1) names(a) <- names(o[[1]])[-length(names(o[[1]]))]
+	names(a) <- gsub(":FLOAT", "", names(a))
+	names(a) <- gsub(":INT", "", names(a))
+	names(a)[1:2] <- c("exposure", "outcome")
+	a$id <- paste(a$exposure, a$outcome)
+	a$exposure <- as.character(a$exposure)
+	a$outcome <- as.character(a$outcome)
+	k <- subset(a, method == "FE IVW" & selection == "Tophits" & nsnp > 5) %>% .$id
+	a <- subset(a, paste(exposure, outcome) %in% k)
+	o[[i]] <- a
+}
+o <- bind_rows(o)
+
+moe1 <- subset(o, method == "Steiger null") %>% subset(!duplicated(id))
+moe2 <- filter(o, ! id %in% moe1$id) %>% group_by(id) %>% arrange(desc(moescore)) %>% slice(1)
+
+moe <- bind_rows(moe1, moe2)
+table(moe$method, moe$selection)
+table(moe$method)
+
+moe$z <- abs(moe$b / moe$se)
+moe$z[moe$z > 10] <- 10
+table(z > 100)
+
+table(a$method, a$selection)
+
+ggplot(moe, aes(x=z)) +
+geom_histogram(aes(fill=selection), position="dodge") +
+facet_grid(method ~ .) +
+theme(strip.text = element_text(angle=0))
+
+
+```
+
+## 1. Reverse direction results
+
+```{r}
+
+b <- subset(a, id %in% subset(a, method == "Steiger null")$id)
+bsig <- subset(b, method == "RE IVW" & selection == "HF" & p.adjust(pval, "fdr") < 0.05)
+bsig <- merge(bsig, subset(traits, select=c(bgcidId, trait)), by.x="exposure", by.y="bgcidId")
+bsig <- merge(bsig, subset(traits, select=c(bgcidId, trait)), by.x="outcome", by.y="bgcidId")
+subset(bsig, select=c(trait.x, trait.y)) %>% kable
+```
+
+## 2. 
+
+
+
+## 1. Compare causal effect estimates across ivw, ivw HF. 
+
+
+
+What are notable discrepancies?
+
+2. Compare 
+
+
+
