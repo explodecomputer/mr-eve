@@ -12,6 +12,7 @@ library(dplyr)
 library(data.table)
 library(knitr)
 library(ggplot2)
+library(tidyr)
 
 traits <- get_traits()
 o <- list()
@@ -65,8 +66,93 @@ bsig <- merge(bsig, subset(traits, select=c(bgcidId, trait)), by.x="outcome", by
 subset(bsig, select=c(trait.x, trait.y)) %>% kable
 ```
 
-## 2. 
+## 2. Instrument selection
 
+
+```{r}
+
+library(data.table)
+library(dplyr)
+library(tidyr)
+library(mrever)
+library(ggplot2)
+connect()
+
+
+b <- subset(o, method %in% c("FE IVW", "Wald ratio", "Steiger null"))
+
+traits <- get_traits() %>% dplyr::select(c(bgcidId, sample_size, trait, nsnp))
+out <- group_by(b, exposure, outcome, selection) %>% 
+summarise(instruments = first(nsnp)) %>% 
+inner_join(., traits, by=c("exposure"="bgcidId"))
+
+
+p <- tidyr::spread(o, key=selection, value=instruments)
+
+
+save(out, file="out.rdata")
+
+ggplot(out, aes(x=sample_size, y=instruments)) +
+# geom_point(aes(colour=selection)) +
+geom_smooth(aes(colour=selection))
+
+out$n2 <- out$sample_size
+out$n2[out$n2 > 500000] <- NA
+
+out$nbin <- cut(out$n2, 10)
+table(out$nbin)
+
+ggplot(subset(out, !is.na(n2)), aes(x=nbin, y=instruments)) +
+geom_boxplot(aes(fill=selection), position="dodge", outlier.shape=NA) +
+scale_fill_brewer(type="qual") +
+theme(axis.text.x=element_text(angle=90))
+
+
+temp <- subset(out, selection %in% c("DF", "Tophits")) %>% 
+group_by(exposure, outcome) %>%
+summarise(nrev = abs(diff(instruments)))
+
+
+temp <- tidyr::spread(out, key=selection, value=instruments)
+temp$nrev <- temp$Tophits - temp$DF
+summary(lm(nrev ~ I(n2/10000), temp))
+
+
+## Import result:
+
+temp$prev <- temp$nrev / temp$Tophits
+summary(lm(prev ~ I(n2/100000), temp))
+summary(temp$prev)
+
+# Across 758955 MR analyses, for every 100k increase in sample size the proportion of instruments that are reverse causal increases by 2.8% (s.e. 0.023, p < 2e-16)
+
+
+ggplot(temp, aes(x=n2, y=prev)) +
+geom_point(alpha=0.4) +
+geom_smooth() +
+geom_smooth(method="lm")
+
+ggplot(temp %>% filter(!is.na(n2)), aes(x=nbin, y=prev)) +
+geom_boxplot()
+
+
+temp2 <- group_by(temp, exposure, n2) %>%
+summarise(
+	mdf = mean(Tophits - DF), pmdf = mdf / max(Tophits),
+	mhf = mean(Tophits - HF), pmhf = mhf / max(Tophits)
+)
+
+summary(lm(pmdf ~ n2, temp2))
+summary(lm(pmhf ~ n2, temp2))
+
+
+ggplot(temp2 %>% , aes(x=))
+
+summary(lm(nrev ~ I(n2/1000), temp))
+
+
+
+```
 
 
 ## 1. Compare causal effect estimates across ivw, ivw HF. 
