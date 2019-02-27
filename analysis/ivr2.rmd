@@ -1,0 +1,207 @@
+---
+title: Using the graph
+---
+
+1. Trait info is problematic
+2. Method is not really applicable when fewer than say 5 SNPs
+
+
+1. Find instruments for x
+2. See if x associates with any other X
+3. Get all instruments for X and make an "exposure set"
+4. For x-y estimate remove y from exposure set
+5. 
+
+
+1. Get list of independent traits
+2. 
+
+
+
+
+
+
+
+Overcoming reverse causal instruments
+- how many reverse causal instruments are there??
+
+
+Predicting the parameter space improves over single methods
+
+Application to summary data reveals extensive connectedness throughout the phenome
+
+Horizontal pleiotropy increases as more instruments are discovered
+
+
+
+
+
+
+```{r}
+# library(mrever)
+library(igraph)
+connect()
+
+mrever_to_mr <- function(id1, id2)
+{
+	a <- TwoSampleMR::format_data(
+		get_instruments(id1),
+		snp_col="variantId",
+		effect_allele_col="alt",
+		other_allele_col="ref",
+		id_col="bgcidId",
+		units_col="unit"
+	)
+	b <- TwoSampleMR::format_data(
+		get_genassoc(a$SNP, id2),
+		type="outcome",
+		snp_col="variantId",
+		effect_allele_col="alt",
+		other_allele_col="ref",
+		id_col="bgcidId",
+		units_col="unit"
+	)
+	return(TwoSampleMR::harmonise_data(a,b))
+}
+
+fill_in_sd <- function(traits)
+{
+
+	estimate_trait_sd <- function(b, se, n, p)
+	{
+		z <- b / se
+		standardised_bhat <- sqrt((z^2/(z^2+n-2)) / (2 * p * (1-p))) * sign(z)
+		estimated_sd <- b / standardised_bhat
+		return(median(estimated_sd, na.rm=T))
+	}
+	# table(is.na(traits$sd), traits$unit) %>%t
+	traits$unit[is.na(traits$unit)] <- "log odds"
+
+	# For the time being just treat logor as continuous
+	traits$SD <- traits$sd
+	# table(is.na(traits$SD), traits$unit) %>% t
+	traits$unit[traits$unit == "NA" & traits$ncase != 0] <- "risk difference"
+	traits$unit[traits$unit == "NA" & traits$ncase == 0] <- "SD"
+	traits$SD[grepl("SD", traits$unit)] <- 1
+
+	ind <- traits$unit == "risk difference" & traits$ncontrol == 0
+	traits$ncontrol[ind] <- traits$sample_size[ind] - traits$ncase[ind]
+
+	ind <- traits$unit == 'risk difference'
+	# traits$SD[ind] <- (traits$ncase[ind] / traits$sample_size[ind]) * (traits$ncontrol[ind] / traits$sample_size[ind])
+	traits$SD[ind] <- NA
+
+	rsidlist <- get_instruments(2)$variantId
+	todo <- subset(traits, is.na(SD))$bgcidId
+	for(i in 1:length(todo))
+	{
+		message(i)
+		inst <- get_instruments(todo[i])
+		if(is.null(inst)) inst <- get_genassoc(rsidlist, todo[i])
+		miseaf <- inst$variantId[is.na(inst$eaf)]
+		if(length(miseaf) > 0)
+		{
+			eaf <- get_genassoc(miseaf, "UKB-a:100") %>% dplyr::select(variantId, eaf) %>% filter(variantId %in% inst$variantId)
+			inst$eaf[match(eaf$variantId, inst$variantId)] <- as.numeric(eaf$eaf)
+			inst$eaf <- as.numeric(inst$eaf)
+		}
+		s <- estimate_trait_sd(inst$beta, inst$se, inst$samplesize, inst$eaf)
+		message(s)
+		traits$SD[traits$bgcidId == todo[i]] <- s
+	}	
+	traits$sd <- traits$SD
+	return(traits)
+
+}
+```
+
+
+```{r}
+# l <- list()
+# for(i in 1:nrow(traits))
+# {
+# 	inst <- get_instruments(traits$bgcidId[i])
+# 	if(is.null(inst))
+# 		next
+# 	cands <- genassocscan(inst$variantId, 0.05 / length(traits) / nrow(inst))
+
+# }
+
+traits <- get_traits() %>% fill_in_sd(.)
+traitst <- subset(traits, unit != "mm3")
+
+
+# Do phewas of everything
+l <- lapply(1:nrow(traits), function(i) phewas(traits$bgcidId[i]))
+l[sapply(l, is.null)] <- NULL
+
+# Remove traits that have fewer than 80% of results
+l[sapply(l, function(x) nrow(x) < length(l) * 0.8)] <- NULL
+
+phe <- bind_rows(l)
+save(phe, file="phewas.rdata")
+
+idlist <- unique(phe$exposure)
+phe <- subset(phe, outcome %in% exposure)
+table(phe$method)
+phe$se[is.na(phe$se)] <- 1
+phe$se <- abs(phe$se)
+phe$z <- pmin(abs(phe$b / phe$se), 10)
+
+tr <- bind_cols(tibble(bgcidId=traits$bgcidId), subset(traits, select=-c(bgcidId))) %>% filter(bgcidId %in% c(l$exposure))
+
+gr <- graph_from_data_frame(subset(l, z > qnorm(1e-16, low=F), select=c(exposure, outcome)), directed=TRUE, vertices = tr)
+E(gr)$weight <- subset(l, z > qnorm(1e-16, low=F))$z
+
+hist(l$z)
+```
+
+
+
+
+
+
+estimate_ivr2 <- function(l, traits)
+{
+	indx <- match(l$exposure, traits$bgcidId)
+	indy <- match(l$outcome, traits$bgcidId)
+	l$ivr2 <- l$b^2 * traits$sd[indx]^2 / traits$sd[indy]^2
+	return(l)
+}
+
+
+o <- estimate_ivr2(phe, traits)
+o <- subset(o, pval < 1e-6)
+subset(o, ivr2 > 10) %>% arrange(desc(ivr2)) %>% head
+
+
+
+
+hist(o$ivr2)
+
+o <- subset(o, exposure %in% traitst$bgcidId & outcome %in% traitst$bgcidId)
+
+o %>% arrange(desc(ivr2)) %>% head
+hist($ivr2)
+
+
+
+
+
+wc <- cluster_walktrap(gr, steps=1, weights = E(gr)$weight)
+com <- communities(wc)
+
+hs <- hub_score(gr)$vector
+
+plot(gr)
+
+
+l <- subset(l, )
+
+		
+
+com <- communities(gr)
+
+
+
+
