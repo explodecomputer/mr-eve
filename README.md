@@ -6,7 +6,7 @@
 
 [https://github.com/explodecomputer/mr-eve](https://github.com/explodecomputer/mr-eve): Construct the MR-EvE database. Includes `makemreve` R package for housing various functions
 
-[https://github.com/mrcieu/mrever](https://github.com/mrcieu/mrever): R package for querying the MR-EvE graph database
+[https://github.com/mrcieu/mrever](https://github.com/mrcieu/mrever): R package for generating and querying the MR-EvE graph database
 
 [https://github.com/mrcieu/mr-eve-webapp](https://github.com/mrcieu/mr-eve-webapp): Shiny web app for interfacing with MR-EvE
 
@@ -68,14 +68,6 @@ What `--cluster` does is just append the argument in front of the command that i
 
 ---
 
-## To do
-
-At the moment a lot is hard coded. Need to make it flexible such that new incoming data leads to a separate instance of the whole pipeline, with the new IDs determining how things are run
-
-Also, need to copy across any new elastic files and update bcf directory
-
----
-
 ## Notes
 
 Create a lower-triangular matrix of all results.
@@ -114,3 +106,14 @@ Snakefile applied to those new files.
 6. update inventory
 7. upload to neo4j
 
+---
+
+## To do
+
+At the moment a lot is hard coded. Need to make it flexible such that new incoming data leads to a separate instance of the whole pipeline, with the new IDs determining how things are run
+
+Also, need to copy across any new elastic files and update bcf directory
+
+- use `config.json` for paths
+- migrate to `mrever` R package
+- generate per-variant heterogeneity stats
