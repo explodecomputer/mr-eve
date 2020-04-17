@@ -2,6 +2,9 @@ library(biomaRt)
 library(dplyr)
 library(GenomicRanges)
 
+args <- commandArgs(T)
+output <- args[1]
+
 ensembl <- useEnsembl(biomart="ensembl", dataset="hsapiens_gene_ensembl", GRCh=37)
 genes <- lapply(c(1:22, "X", "Y"), function(x) {
 	message(x)
@@ -21,4 +24,4 @@ genesgr <- genes %>% {
 		hgnc_symbol = .$hgnc_symbol,
 		gene_biotype = .$gene_biotype
 	)}
-save(genesgr, file="data/genes.rdata")
+save(genesgr, file=output)

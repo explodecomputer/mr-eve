@@ -12,6 +12,7 @@ parser = argparse.ArgumentParser(description = 'Extract and clump top hits')
 parser.add_argument('--dirs', nargs='+', required=True)
 parser.add_argument('--output', required=True)
 parser.add_argument('--existing', required=False)
+parser.add_argument('--idlists', nargs='+', required=False)
 
 
 ###args=parser.parse_args(['--dirs', '../../gwas-files', '--output', '../../gwas-files/instrument-master.txt'])
@@ -28,8 +29,26 @@ logger.addHandler(handler)
 logger.info(json.dumps(vars(args), indent=1))
 
 filelist = []
-for d in args.dirs:
-	filelist += glob.glob(d + '/*/clump.txt')
+ndir = len(args.dirs)
+
+# If idlists provided then make a list of clump files, 
+# otherwise find all clump files in the directory lists
+
+print(args.dirs[0])
+print(args.idlists)
+
+if args.idlists is not None:
+	if not len(args.idlists) == len(args.dirs):
+		raise Exception("--idlists must be empty or same length as --dirs")
+	for i in range(len(args.dirs)):
+		with open(args.idlists[i], 'r') as f:
+			ids = [x.strip() for x in f.readlines()]
+		candidateids = [args.dirs[i] + '/' + x + "/clump.txt" for x in ids]
+		print(candidateids[1])
+		filelist += [x for x in candidateids if os.path.isfile(x)]
+else:
+	for d in args.dirs:
+		filelist += glob.glob(d + '/*/clump.txt')
 
 logger.info("found " + str(len(filelist)) + " snp lists")
 

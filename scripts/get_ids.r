@@ -1,14 +1,14 @@
-library(TwoSampleMR)
+library(ieugwasr)
 library(dplyr)
-ao <- available_outcomes()
-idinfo <- filter(ao, 
-	access %in% c("immunobase_users", "public", "Public"),
-	nsnp > 100000,
-	mr
-) %>% mutate(file=file.path("../gwas-files", id, "data.bcf")) %>%
-filter(file.exists(file)) %>% as_tibble()
 
+args <- commandArgs(T)
+idlist <- args[1]
+gwasdir <- args[2]
+output <- args[3]
 
-write.table(idinfo$id, file="data/idlist.txt", row=FALSE, col=FALSE, qu=FALSE)
-save(idinfo, file="data/idinfo.rdata")
+idlist <- scan(idlist, what="character")
 
+idinfo <- ieugwasr::gwasinfo(idlist) %>%
+	mutate(file=file.path(gwasdir, id, paste0(id, ".vcf.gz")))
+
+save(idinfo, file=output)

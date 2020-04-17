@@ -1,26 +1,27 @@
 if(!require(gwasvcftools))
 {
 	if(!required(devtools)) install.packages("devtools")
-	devtools::install_github("MRCIEU/gwasvcftools")
+	devtools::install_github("MRCIEU/gwasvcf")
 }
-library(gwasvcftools)
+library(gwasvcf)
 library(argparse)
+library(genetics.binaRies)
+gwasvcf::set_plink()
+gwasvcf::set_bcftools()
 
 # create parser object
 parser <- ArgumentParser()
 parser$add_argument('--snplist', required=TRUE)
-parser$add_argument('--bcf-dir', required=TRUE)
-parser$add_argument('--gwas-id', required=TRUE)
+parser$add_argument('--gwasdir', required=TRUE)
+parser$add_argument('--id', required=TRUE)
 parser$add_argument('--out', required=TRUE)
 parser$add_argument('--bfile', required=TRUE)
 parser$add_argument('--get-proxies', default='yes')
-parser$add_argument('--vcf-ref', required=FALSE)
 parser$add_argument('--tag-r2', type="double", default=0.6)
 parser$add_argument('--tag-kb', type="double", default=5000)
 parser$add_argument('--tag-nsnp', type="double", default=5000)
 parser$add_argument('--palindrome-freq', type="double", default=0.4)
 parser$add_argument('--no-clean', action="store_true", default=FALSE)
-parser$add_argument('--rdsf-config', required=FALSE, default='')
 parser$add_argument('--instrument-list', default=FALSE, action="store_true")
 parser$add_argument('--threads', type="integer", default=1)
 
@@ -28,21 +29,18 @@ parser$add_argument('--threads', type="integer", default=1)
 args <- parser$parse_args()
 # args <- parser$parse_args(c("--bfile", "../../vcf-reference-datasets/ukb/ukb_ref", "--gwas-id", "2", "--snplist", "temp.snplist", "--no-clean", "--out", "out", "--bcf-dir", "../../gwas-files", "--vcf-ref", "../../vcf-reference-datasets/1000g/1kg_v3_nomult.bcf", "--get-proxies"))
 print(args)
-tempname <- tempfile(pattern="extract", tmpdir=dirname(args[['out']]))
-bcf <- file.path(args[['bcf_dir']], args[['gwas_id']], "data.bcf")
-snplist <- fread(args[['snplist']], header=FALSE, sep="\t")
-o1 <- gwasvcftools::extract(
-	bcf=bcf, 
-	snplist=snplist, 
-	tempname=tempname, 
+vcf <- file.path(args[['gwasdir']], args[['id']], paste0(args[['id']], ".vcf.gz"))
+snplist <- scan(args[['snplist']], what="character")
+str(snplist)
+o1 <- gwasvcf::query_gwas(
+	vcf=vcf, 
+	rsid=snplist, 
 	proxies=args[['get_proxies']], 
 	bfile=args[["bfile"]], 
-	vcf=args[["vcf_ref"]],
-	args[["tag_kb"]], 
-	args[["tag_nsnp"]], 
-	args[["tag_r2"]]
-)
-o1$mrbaseid <- args[['gwas_id']]
+	tag_kb=args[["tag_kb"]], 
+	tag_nsnp=args[["tag_nsnp"]], 
+	tag_r2=args[["tag_r2"]]
+) %>% gwasvcf::vcf_to_tibble()
 
 print(head(o1))
 print(dim(o1))
@@ -50,16 +48,9 @@ print(dim(o1))
 if(!is.null(args[['instrument_list']]))
 {
 	print("instruments")
-	o1$instrument <- FALSE
-	print("here")
-	clumpfile <- file.path(args[['bcf_dir']], args[['gwas_id']], "clump.txt")
-	clump <- fread(clumpfile, header=FALSE, sep="\t")
-	if(nrow(clump) > 0)
-	{
-		clump$id <- paste(clump$V1, clump$V2)
-		id <- paste(o1$CHROM, o1$POS)
-		o1$instrument[id %in% clump$id] <- TRUE
-	}
+	clumpfile <- file.path(args[['gwasdir']], args[['id']], "clump.txt")
+	clump <- scan(clumpfile, what="character")
+	o1$instrument <- o1$rsid %in% clump
 }
 write_out(o1, basename=args[["out"]], header=FALSE)
 

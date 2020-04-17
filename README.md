@@ -12,6 +12,21 @@
 
 ---
 
+## Configuration
+
+Create a `config.json` file that has:
+
+```json
+{
+  "gwasdir": "/mnt/storage/private/mrcieu/research/scratch/IGD/data/public",
+  "outdir": "/mnt/storage/private/mrcieu/research/mr-eve/mr-eve",
+  "ldrefname": "data_maf0.01_rs_ref",
+  "ldrefhost": "http://fileserve.mrcieu.ac.uk/ld/data_maf0.01_rs_ref.tgz",
+  "rfhost": "https://www.dropbox.com/s/5la7y38od95swcf/rf.rdata?dl=0"
+}
+```
+
+
 ## Snakemake
 
 Configure to run on cluster using `bc4-cluster.json`:
