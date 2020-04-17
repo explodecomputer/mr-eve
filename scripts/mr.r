@@ -1,6 +1,6 @@
 suppressWarnings(suppressPackageStartupMessages({
 	library(TwoSampleMR)
-	library(makemreve)
+	library(mrever)
 	library(tidyverse)
 	library(car)
 	library(randomForest)
@@ -43,9 +43,9 @@ load(args[["idinfo"]])
 load(args[["rf"]])
 
 # Determine analyses to run
-param <- mreve::determine_analyses(id, idlist, newidlist, args[["what"]])
+param <- mrever::determine_analyses(id, idlist, newidlist, args[["what"]])
 
-a <- try(mreve::readml(filename, idinfo))
+a <- try(mrever::readml(filename, idinfo))
 glimpse(a$exposure_dat)
 if(nrow(a$exposure_dat) == 0)
 {
@@ -66,10 +66,10 @@ scan <- parallel::mclapply(param$id, function(i)
 	res <- try({
 		if(p$exposure == id)
 		{
-			b <- mreve::readml(file.path(args[["gwasdir"]], p$outcome, "derived/instruments/ml.csv.gz"), idinfo)
+			b <- mrever::readml(file.path(args[["gwasdir"]], p$outcome, "derived/instruments/ml.csv.gz"), idinfo)
 			dat <- suppressMessages(TwoSampleMR::harmonise_data(a$exposure_dat, b$outcome_dat))
 		} else {
-			b <- mreve::readml(file.path(args[["gwasdir"]], p$exposure, "derived/instruments/ml.csv.gz"), idinfo)
+			b <- mrever::readml(file.path(args[["gwasdir"]], p$exposure, "derived/instruments/ml.csv.gz"), idinfo)
 			dat <- TwoSampleMR::harmonise_data(b$exposure_dat, a$outcome_dat)
 		}
 		res <- suppressMessages(TwoSampleMR::mr_wrapper(dat))
