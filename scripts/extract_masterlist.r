@@ -3,9 +3,11 @@ if(!require(gwasvcftools))
 	if(!required(devtools)) install.packages("devtools")
 	devtools::install_github("MRCIEU/gwasvcf")
 }
+library(dplyr)
 library(gwasvcf)
 library(argparse)
 library(genetics.binaRies)
+library(mrever)
 gwasvcf::set_plink()
 gwasvcf::set_bcftools()
 
@@ -27,8 +29,7 @@ parser$add_argument('--threads', type="integer", default=1)
 
 
 args <- parser$parse_args()
-# args <- parser$parse_args(c("--bfile", "../../vcf-reference-datasets/ukb/ukb_ref", "--gwas-id", "2", "--snplist", "temp.snplist", "--no-clean", "--out", "out", "--bcf-dir", "../../gwas-files", "--vcf-ref", "../../vcf-reference-datasets/1000g/1kg_v3_nomult.bcf", "--get-proxies"))
-print(args)
+str(args)
 vcf <- file.path(args[['gwasdir']], args[['id']], paste0(args[['id']], ".vcf.gz"))
 snplist <- scan(args[['snplist']], what="character")
 str(snplist)
@@ -40,10 +41,12 @@ o1 <- gwasvcf::query_gwas(
 	tag_kb=args[["tag_kb"]], 
 	tag_nsnp=args[["tag_nsnp"]], 
 	tag_r2=args[["tag_r2"]]
-) %>% gwasvcf::vcf_to_tibble()
+) %>% 
+	gwasvcf::vcf_to_tibble() %>%
+	dplyr::select(id, rsid=ID, chr=seqnames, pos=start, ref=REF, alt=ALT, beta=ES, se=SE, pval=LP, af=AF, n=SS, ncase=NC, proxy=PR) %>%
+	dplyr::mutate(pval = 10^-pval, id=tolower(id))
 
-print(head(o1))
-print(dim(o1))
+dplyr::glimpse(o1)
 
 if(!is.null(args[['instrument_list']]))
 {
@@ -52,5 +55,5 @@ if(!is.null(args[['instrument_list']]))
 	clump <- scan(clumpfile, what="character")
 	o1$instrument <- o1$rsid %in% clump
 }
-write_out(o1, basename=args[["out"]], header=FALSE)
 
+mrever::write_out(o1, args[["out"]], header=FALSE)

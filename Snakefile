@@ -21,9 +21,7 @@ IDLIST = OUTDIR + "/resources/ids.txt"
 INSTRUMENTLIST = OUTDIR + "/resources/instruments.txt"
 
 # all ids in gwasdir
-ID = [x.strip().lower() for x in [y for y in os.listdir(GWASDIR)] if 'eqtl-a' not in x][0:10]
-with open(IDLIST, 'w') as f:
-  [f.writelines(x + '\n') for x in ID]
+ID = [x.strip().lower() for x in [y for y in os.listdir(GWASDIR)] if 'eqtl-a' not in x]
 
 NTHREAD=10
 
@@ -41,6 +39,15 @@ rule get_genes:
 	shell:
 		"Rscript scripts/get_genes.r {output}"
 
+
+rule write_idlist:
+	output:
+		expand('{IDLIST}', IDLIST=IDLIST)
+	run:
+		with open(output[0], 'w') as f:
+			[f.writelines(x + '\n') for x in ID]
+
+
 rule get_id_info:
 	input:
 		expand('{IDLIST}', IDLIST=IDLIST)
@@ -49,7 +56,6 @@ rule get_id_info:
 	shell:
 		"Rscript scripts/get_ids.r {input} {GWASDIR} {output}"
 
-# Step 0: get LD reference files
 
 rule download_ldref:
 	output:
@@ -65,7 +71,6 @@ rule download_rfobj:
 	shell:
 		"wget -O {output} {RFHOST}"
 
-# Step 2: Create a master list of all unique instrumenting SNPs
 
 rule instrument_list:
 	input:
@@ -76,7 +81,6 @@ rule instrument_list:
 	shell:
 		'./scripts/instrument_list.py --dirs {GWASDIR} --idlists {IDLIST} --output {output}'
 
-# Step 3: Extract the master instrument list from each GWAS
 
 rule extract_master:
 	input:
@@ -94,10 +98,8 @@ Rscript scripts/extract_masterlist.r \
 --bfile {LDREFPATH} \
 --id {wildcards.id} \
 --instrument-list \
---get-proxies yes"
+--get-proxies yes
 		"""
-
-# Step 4: Perform MR
 
 rule mr:
 	input:
@@ -118,8 +120,6 @@ Rscript scripts/mr.r \
 --threads {NTHREAD}
 		"""
 
-# Step 5: Create neo4j files
-
 rule neo4j:
 	input:
 		expand('{OUTDIR}/data/{id}/mr.rdata', OUTDIR=OUTDIR, id=ID),
@@ -129,5 +129,6 @@ rule neo4j:
 	shell:
 		'Rscript scripts/prepare_neo4j.r'
 
-# Step 6: Upload neo4j
+
+# Upload neo4j ...
 

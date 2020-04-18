@@ -51,11 +51,11 @@ Ideally output would actually be `logs/{rule}.{wildcards.id}.out` but I don't th
 In principle this should then run from the root directory
 
 ```
-mkdir logs
-snakemake -pr \
--j 500 \
+snakemake -prk \
+-j 100 \
 --cluster-config bc4-cluster.json \
 --cluster "sbatch \
+  --job-name={cluster.name} \
   --partition={cluster.partition} \
   --nodes={cluster.nodes} \
   --ntasks-per-node={cluster.ntask} \
@@ -70,7 +70,8 @@ On bc4 it has to run in the background, like in screen for example. To test that
 ```
 snakemake --cluster-config bc4-cluster.json \
 --cluster "echo \
-  '--partition={cluster.partition} \
+  '--job-name={cluster.name} \
+  --partition={cluster.partition} \
   --nodes={cluster.nodes} \
   --ntasks-per-node={cluster.ntask} \
   --cpus-per-task={cluster.ncpu} \

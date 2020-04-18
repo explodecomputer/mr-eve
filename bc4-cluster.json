@@ -1,13 +1,23 @@
 {
 	"__default__" :
 	{
+		"name": "{rule}",
 		"partition": "mrcieu",
 		"nodes": "1",
 		"ncpu": "1",
 		"ntask": "1",
 		"time": "0:30:00",
 		"mem": "10G",
-		"output": "logs/{wildcards.id}.out"
+		"output": "job_reports/{rule}.out"
+	},
+	"extract_master" :
+	{
+		"name": "{rule}.{wildcards.id}",
+		"output": "job_reports/{rule}.{wildcards.id}.out"
+	},
+	"mr" :
+	{
+		"name": "{rule}.{wildcards.id}",
+		"output": "job_reports/{rule}.{wildcards.id}.out"
 	}
 }
-
