@@ -1,8 +1,3 @@
-if(!require(gwasvcftools))
-{
-	if(!required(devtools)) install.packages("devtools")
-	devtools::install_github("MRCIEU/gwasvcf")
-}
 library(dplyr)
 library(gwasvcf)
 library(argparse)

@@ -21,7 +21,7 @@ IDLIST = OUTDIR + "/resources/ids.txt"
 INSTRUMENTLIST = OUTDIR + "/resources/instruments.txt"
 
 # all ids in gwasdir
-ID = [x.strip().lower() for x in [y for y in os.listdir(GWASDIR)] if 'eqtl-a' not in x]
+ID = [x.strip() for x in [y for y in os.listdir(GWASDIR)] if 'eqtl-a' not in x]
 
 NTHREAD=10
 
@@ -29,8 +29,9 @@ NTHREAD=10
 
 rule all:
 	input:
-		expand('{OUTDIR}/data/{id}/mr.rdata', OUTDIR=OUTDIR, id=ID),
-		expand('{OUTDIR}/neo4j/somefile', OUTDIR=OUTDIR)
+		# expand('{OUTDIR}/data/{id}/mr.rdata', OUTDIR=OUTDIR, id=ID),
+		# expand('{OUTDIR}/neo4j/somefile', OUTDIR=OUTDIR)
+		expand('{OUTDIR}/data/{id}/ml.csv.gz', OUTDIR=OUTDIR, id=ID)
 
 
 rule get_genes:

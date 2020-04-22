@@ -26,6 +26,7 @@ Create a `config.json` file that has:
 }
 ```
 
+---
 
 ## Snakemake
 
@@ -51,8 +52,9 @@ Ideally output would actually be `logs/{rule}.{wildcards.id}.out` but I don't th
 In principle this should then run from the root directory
 
 ```
+export TMPDIR=/mnt/storage/private/mrcieu/research/mr-eve/tmpdir
 snakemake -prk \
--j 100 \
+-j 200 \
 --cluster-config bc4-cluster.json \
 --cluster "sbatch \
   --job-name={cluster.name} \
@@ -62,7 +64,9 @@ snakemake -prk \
   --cpus-per-task={cluster.ncpu} \
   --time={cluster.time} \
   --mem={cluster.mem} \
-  --output={cluster.output}"
+  --output={cluster.output} \
+  --parsable" \
+--cluster-status ./slurm_status.py
 ```
 
 On bc4 it has to run in the background, like in screen for example. To test that it is submitting 
@@ -133,3 +137,5 @@ Also, need to copy across any new elastic files and update bcf directory
 - use `config.json` for paths
 - migrate to `mrever` R package
 - generate per-variant heterogeneity stats
+
+After MR has been performed we can go back and estimate the heterogeneity for every SNP.
