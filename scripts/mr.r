@@ -14,23 +14,23 @@ suppressWarnings(suppressPackageStartupMessages({
 parser <- ArgumentParser()
 parser$add_argument('--idlist', required=TRUE)
 parser$add_argument('--newidlist', required=FALSE)
-parser$add_argument('--gwasdir', required=TRUE)
+parser$add_argument('--outdir', required=TRUE)
 parser$add_argument('--id', required=TRUE)
 parser$add_argument('--rf', required=TRUE)
 parser$add_argument('--what', default="eve")
-parser$add_argument('--out', required=TRUE)
 parser$add_argument('--threads', type="integer", default=1)
-parser$add_argument('--idinfo', default="idinfo.rdata")
 args <- parser$parse_args()
 str(args)
 
 # Check file exists for ID
 id <- args[["id"]]
-filename <- file.path(args[["gwasdir"]],id,"derived/instruments/ml.csv.gz")
+filename <- file.path(args[["outdir"]], "data", id, "ml.csv.gz")
 stopifnot(file.exists(filename))
 
+message("reading id lists")
+
 # Read in ID lists
-idlist <- scan(args[["idlist"]], what=character())
+load(args[["idlist"]])
 if(!is.null(args[["newidlist"]]))
 {
 	newidlist <- scan(args[["newidlist"]], what=character())
@@ -38,26 +38,37 @@ if(!is.null(args[["newidlist"]]))
 	newidlist <- NULL
 }
 
+idlist <- idinfo$id
+
+message(length(idlist), " ids to analyse")
+
 # Load stuff
-load(args[["idinfo"]])
 load(args[["rf"]])
 
 # Determine analyses to run
 param <- mrever::determine_analyses(id, idlist, newidlist, args[["what"]])
+str(param)
 
 a <- try(mrever::readml(filename, idinfo))
 glimpse(a$exposure_dat)
 if(nrow(a$exposure_dat) == 0)
 {
-	param <- subset(param, exposure != id)
+	message("removing exposure analyses due to no instruments")
+	param <- param[param$exposure != id, ]
 }
+str(param)
+
 if(nrow(param) == 0)
 {
+	message("No analyses left to run")
 	scan <- list()
 	param[["available"]] <- logical(0)
-	save(scan, param, file=args[["out"]])
+	save(scan, param, file=file.path(args[["outdir"]], "data", id, "mr.rdata"))
 	q()
 }
+
+mr_params <- default_parameters()
+mr_params$nboot <- 500
 
 scan <- parallel::mclapply(param$id, function(i)
 {
@@ -66,13 +77,13 @@ scan <- parallel::mclapply(param$id, function(i)
 	res <- try({
 		if(p$exposure == id)
 		{
-			b <- mrever::readml(file.path(args[["gwasdir"]], p$outcome, "derived/instruments/ml.csv.gz"), idinfo)
+			b <- mrever::readml(file.path(args[["outdir"]], "data", p$outcome, "ml.csv.gz"), idinfo)
 			dat <- suppressMessages(TwoSampleMR::harmonise_data(a$exposure_dat, b$outcome_dat))
 		} else {
-			b <- mrever::readml(file.path(args[["gwasdir"]], p$exposure, "derived/instruments/ml.csv.gz"), idinfo)
+			b <- mrever::readml(file.path(args[["outdir"]], "data", p$exposure, "ml.csv.gz"), idinfo)
 			dat <- TwoSampleMR::harmonise_data(b$exposure_dat, a$outcome_dat)
 		}
-		res <- suppressMessages(TwoSampleMR::mr_wrapper(dat))
+		res <- suppressMessages(TwoSampleMR::mr_wrapper(dat, parameters=mr_params))
 		res <- suppressMessages(TwoSampleMR::mr_moe(res, rf))
 		rm(b,dat)
 		res
@@ -84,4 +95,4 @@ names(scan) <- param$id
 param$available <- TRUE
 param$available[sapply(scan, is.null)] <- FALSE
 
-save(scan, param, file=args[["out"]])
+save(scan, param, file=file.path(args[["outdir"]], "data", id, "mr.rdata"))

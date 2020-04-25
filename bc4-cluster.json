@@ -7,7 +7,7 @@
 		"ncpu": "1",
 		"ntask": "1",
 		"time": "0:50:00",
-		"mem": "30G",
+		"mem": "10G",
 		"output": "job_reports/{rule}.out"
 	},
 	"extract_master" :
@@ -18,6 +18,9 @@
 	"mr" :
 	{
 		"name": "{rule}.{wildcards.id}",
-		"output": "job_reports/{rule}.{wildcards.id}.out"
+		"output": "job_reports/{rule}.{wildcards.id}.out",
+		"time": "10:00:00",
+		"ncpu": "7",
+		"mem": "32G"
 	}
 }

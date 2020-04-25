@@ -12,7 +12,7 @@ parser$add_argument('--snplist', required=TRUE)
 parser$add_argument('--gwasdir', required=TRUE)
 parser$add_argument('--id', required=TRUE)
 parser$add_argument('--out', required=TRUE)
-parser$add_argument('--bfile', required=TRUE)
+parser$add_argument('--dbfile', required=TRUE)
 parser$add_argument('--get-proxies', default='yes')
 parser$add_argument('--tag-r2', type="double", default=0.6)
 parser$add_argument('--tag-kb', type="double", default=5000)
@@ -32,12 +32,21 @@ o1 <- gwasvcf::query_gwas(
 	vcf=vcf, 
 	rsid=snplist, 
 	proxies=args[['get_proxies']], 
-	bfile=args[["bfile"]], 
+	dbfile=args[["dbfile"]], 
 	tag_kb=args[["tag_kb"]], 
 	tag_nsnp=args[["tag_nsnp"]], 
 	tag_r2=args[["tag_r2"]]
 ) %>% 
-	gwasvcf::vcf_to_tibble() %>%
+	gwasvcf::vcf_to_tibble()
+
+if(nrow(o1) == 0)
+{
+	message("No results found")
+	mrever::write_out(o1, args[["out"]], header=FALSE)
+	q()
+}
+
+o1 <- o1 %>%
 	dplyr::select(id, rsid=ID, chr=seqnames, pos=start, ref=REF, alt=ALT, beta=ES, se=SE, pval=LP, af=AF, n=SS, ncase=NC, proxy=PR) %>%
 	dplyr::mutate(pval = 10^-pval, id=tolower(id))
 

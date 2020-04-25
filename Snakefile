@@ -29,9 +29,9 @@ NTHREAD=10
 
 rule all:
 	input:
-		# expand('{OUTDIR}/data/{id}/mr.rdata', OUTDIR=OUTDIR, id=ID),
+		expand('{OUTDIR}/data/{id}/ml.csv.gz', OUTDIR=OUTDIR, id=ID),
+		expand('{OUTDIR}/data/{id}/mr.rdata', OUTDIR=OUTDIR, id=ID)
 		# expand('{OUTDIR}/neo4j/somefile', OUTDIR=OUTDIR)
-		expand('{OUTDIR}/data/{id}/ml.csv.gz', OUTDIR=OUTDIR, id=ID)
 
 
 rule get_genes:
@@ -66,6 +66,16 @@ rule download_ldref:
 	shell:
 		"curl -s {LDREFHOST} | tar xzvf - -C {OUTDIR}/reference"
 
+rule create_ldref_sqlite:
+	input:
+		expand("{LDREFPATH}.bed", LDREFPATH=LDREFPATH),
+		expand("{LDREFPATH}.bim", LDREFPATH=LDREFPATH),
+		expand("{LDREFPATH}.fam", LDREFPATH=LDREFPATH)
+	output:
+		expand("{LDREFPATH}.sqlite", LDREFPATH=LDREFPATH)
+	shell:
+		"Rscript -e 'gwasvcf::create_ldref_sqlite(\"{LDREFPATH}\", \"{LDREFPATH}.sqlite\")"
+
 rule download_rfobj:
 	output:
 		expand("{OUTDIR}/reference/rf.rdata", OUTDIR=OUTDIR)
@@ -86,7 +96,7 @@ rule instrument_list:
 rule extract_master:
 	input:
 		expand('{INSTRUMENTLIST}', INSTRUMENTLIST=INSTRUMENTLIST),
-		expand('{LDREFPATH}.bed', LDREFPATH=LDREFPATH)
+		expand('{LDREFPATH}.sqlite', LDREFPATH=LDREFPATH)
 	output:
 		'{OUTDIR}/data/{id}/ml.csv.gz'
 	shell:
@@ -96,28 +106,37 @@ Rscript scripts/extract_masterlist.r \
 --snplist {INSTRUMENTLIST} \
 --gwasdir {GWASDIR} \
 --out {output} \
---bfile {LDREFPATH} \
+--dbfile {LDREFPATH}.sqlite \
 --id {wildcards.id} \
 --instrument-list \
 --get-proxies yes
 		"""
 
+# To speed up snakemake don't require exhaustive dependencies
+rule check_extract_master:
+	input: 
+		expand('{OUTDIR}/data/{id}/ml.csv.gz', OUTDIR=OUTDIR, id=ID),
+	output:
+		'{OUTDIR}/resources/extract_master_flag'
+	shell:
+		"touch {output}"
+
+
 rule mr:
 	input:
-		ml = '{OUTDIR}/data/{id}/ml.csv.gz',
+		flag = expand('{OUTDIR}/resources/extract_master_flag', OUTDIR=OUTDIR),
 		rf = expand('{OUTDIR}/reference/rf.rdata', OUTDIR=OUTDIR),
-		idlist = expand('{IDLIST}.rdata', IDLIST=IDLIST),
+		idlist = expand('{IDLIST}.rdata', IDLIST=IDLIST)
 	output:
 		'{OUTDIR}/data/{id}/mr.rdata'
 	shell:
 		"""
 Rscript scripts/mr.r \
 --idlist {input.idlist} \
---gwasdir {GWASDIR} \
+--outdir {OUTDIR} \
 --id {wildcards.id} \
 --rf {input.rf} \
---what triangle \
---out {output} \
+--what eve \
 --threads {NTHREAD}
 		"""
 
