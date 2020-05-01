@@ -8,17 +8,17 @@
 		"ntask": "1",
 		"time": "0:50:00",
 		"mem": "10G",
-		"output": "job_reports/{rule}.out"
+		"output": "{OUTDIR}/job_reports/{rule}.out"
 	},
 	"extract_master" :
 	{
 		"name": "{rule}.{wildcards.id}",
-		"output": "job_reports/{rule}.{wildcards.id}.out"
+		"output": "{OUTDIR}/job_reports/{rule}.{wildcards.id}.out"
 	},
 	"mr" :
 	{
 		"name": "{rule}.{wildcards.id}",
-		"output": "job_reports/{rule}.{wildcards.id}.out",
+		"output": "{OUTDIR}/job_reports/{rule}.{wildcards.id}.out",
 		"time": "10:00:00",
 		"ncpu": "7",
 		"mem": "32G"

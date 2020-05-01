@@ -12,7 +12,7 @@ LDREFHOST = config['ldrefhost']
 LDREFPATH = OUTDIR + "/reference/" + config['ldrefname']
 RFHOST = config['rfhost']
 
-os.makedirs('job_reports', exist_ok=True)
+os.makedirs(OUTDIR + '/job_reports', exist_ok=True)
 os.makedirs(OUTDIR + '/reference', exist_ok=True)
 os.makedirs(OUTDIR + '/resources', exist_ok=True)
 os.makedirs(OUTDIR + '/neo4j', exist_ok=True)
