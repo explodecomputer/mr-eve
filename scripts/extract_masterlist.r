@@ -48,7 +48,7 @@ if(nrow(o1) == 0)
 
 o1 <- o1 %>%
 	dplyr::select(id, rsid=ID, chr=seqnames, pos=start, ref=REF, alt=ALT, beta=ES, se=SE, pval=LP, af=AF, n=SS, ncase=NC, proxy=PR) %>%
-	dplyr::mutate(pval = 10^-pval, id=tolower(id))
+	dplyr::mutate(pval = 10^-pval, id=id)
 
 dplyr::glimpse(o1)
 
