@@ -13,7 +13,8 @@
 	"extract_master" :
 	{
 		"name": "{rule}.{wildcards.id}",
-		"output": "{OUTDIR}/job_reports/{rule}.{wildcards.id}.out"
+		"output": "{OUTDIR}/job_reports/{rule}.{wildcards.id}.out",
+		"partition": "test,veryshort,mrcieu"
 	},
 	"mr" :
 	{
@@ -21,6 +22,16 @@
 		"output": "{OUTDIR}/job_reports/{rule}.{wildcards.id}.out",
 		"time": "10:00:00",
 		"ncpu": "7",
-		"mem": "32G"
+		"mem": "32G",
+		"partition": "mrcieu,cpu"
+	},
+	"heterogeneity" :
+	{
+		"name": "{rule}.{wildcards.id}",
+		"output": "{OUTDIR}/job_reports/{rule}.{wildcards.id}.out",
+		"time": "6:00:00",
+		"ncpu": "10",
+		"mem": "15G",
+		"partition": "cpu,veryshort,mrcieu"
 	}
 }

@@ -30,7 +30,8 @@ NTHREAD=10
 rule all:
 	input:
 		expand('{OUTDIR}/data/{id}/ml.csv.gz', OUTDIR=OUTDIR, id=ID),
-		expand('{OUTDIR}/data/{id}/mr.rdata', OUTDIR=OUTDIR, id=ID)
+		expand('{OUTDIR}/data/{id}/mr.rdata', OUTDIR=OUTDIR, id=ID),
+		expand('{OUTDIR}/data/{id}/heterogeneity.rdata', OUTDIR=OUTDIR, id=ID)
 		# expand('{OUTDIR}/neo4j/somefile', OUTDIR=OUTDIR)
 
 
@@ -136,6 +137,21 @@ Rscript scripts/mr.r \
 --outdir {OUTDIR} \
 --id {wildcards.id} \
 --rf {input.rf} \
+--what eve \
+--threads {NTHREAD}
+		"""
+
+rule heterogeneity:
+	input:
+		'{OUTDIR}/data/{id}/mr.rdata'
+	output:
+		'{OUTDIR}/data/{id}/heterogeneity.rdata'
+	shell:
+		"""
+Rscript scripts/heterogeneity.r \
+--idlist {IDLIST}.rdata \
+--outdir {OUTDIR} \
+--id {wildcards.id} \
 --what eve \
 --threads {NTHREAD}
 		"""
