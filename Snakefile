@@ -207,7 +207,7 @@ rule neo4j_others:
 		'Rscript scripts/prepare_neo4j.r'
 
 
-rule collect_neo4j_mr:
+rule check_neo4j_mr:
 	input:
 		expand('{OUTDIR}/data/{id}/neo4j_stage/{id}_mr.csv.gz', OUTDIR=OUTDIR, id=ID),
 		expand('{OUTDIR}/data/{id}/neo4j_stage/{id}_moe.csv.gz', OUTDIR=OUTDIR, id=ID),
@@ -216,6 +216,16 @@ rule collect_neo4j_mr:
 		expand('{OUTDIR}/data/{id}/neo4j_stage/{id}_met.csv.gz', OUTDIR=OUTDIR, id=ID),
 		expand('{OUTDIR}/data/{id}/neo4j_stage/{id}_vt.csv.gz', OUTDIR=OUTDIR, id=ID),
 		expand('{OUTDIR}/data/{id}/neo4j_stage/{id}_inst.csv.gz', OUTDIR=OUTDIR, id=ID)
+	output:
+		'{OUTDIR}/resources/neo4j_mr_flag'
+	shell:
+		"touch {output}"
+
+
+
+rule collect_neo4j_mr:
+	input:
+		'{OUTDIR}/resources/neo4j_mr_flag'
 	output:
 		mr = '{OUTDIR}/resources/neo4j_stage/{chunk}_mr.csv.gz',
 		moe = '{OUTDIR}/resources/neo4j_stage/{chunk}_moe.csv.gz',
