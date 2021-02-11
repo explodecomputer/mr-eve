@@ -1,32 +1,66 @@
 # Make trait, snp and gene nodes
-library(makemreve)
+library(mrever)
 library(tidyverse)
 library(data.table)
 library(GenomicRanges)
+library(jsonlite)
+library(myvariant)
+library(ieugwasr)
+library(parallel)
 
+config <- read_json("config.json")
+dir.create(file.path(config$outdir, "resources", "neo4j_stage"))
 
 ## Nodes
 
 # read instrument list
-variants <- fread("resources/instruments.txt", header=FALSE) %>% as_tibble()
-names(variants) <- c("chr", "pos", "ref", "alt", "build", "rsid")
-variants$chr <- as.character(variants$chr)
-variantsfile <- write_simple(variants, "resources/neo4j_stage/variants.csv.gz", "rsid", "variant")
 
+rsid <- scan(file.path(config$outdir, "resources", "instruments.txt"), what=character())
+list1 <- ieugwasr::afl2_rsid(rsid) %>% 
+	dplyr::select(chr, pos=start, ref=ref, alt=alt, rsid=rsid) %>%
+	dplyr::mutate(build="hg19")
+
+rem <- rsid[!rsid %in% list1$rsid]
+list2 <- myvariant::queryVariants(rem) %>%
+	as_tibble() %>%
+	dplyr::select(chr=dbsnp.chrom, pos=dbsnp.hg19.start, ref=dbsnp.ref, alt=dbsnp.alt, rsid=query) %>%
+	dplyr::mutate(build="hg19")
+
+list2$complete <- apply(list2, 1, function(x) sum(x != "" & !is.na(x)))
+list2 <- list2 %>% 
+	dplyr::arrange(dplyr::desc(complete)) %>%
+	dplyr::filter(!duplicated(rsid)) %>%
+	dplyr::select(-complete)
+
+variants <- bind_rows(list1, list2)
+variants$chr[is.na(variants$chr)] <- "0"
+variants$pos[is.na(variants$pos)] <- 0
+dim(variants)
+variantsfile <- write_simple(variants, 
+	file.path(config$outdir, "resources", "neo4j_stage", "variants.csv.gz"), 
+	id1="rsid",
+	id1name="variant"
+)
 
 # Traits
-load("resources/idinfo.rdata")
-idinfo <- idinfo %>% dplyr:: select(-c(access, mr, file, filename, path))
-traitsfile <- write_simple(idinfo, "resources/neo4j_stage/traits.csv.gz", "id", "bgcid")
-
-
+load(file.path(config$outdir, "resources", "ids.txt.rdata"))
+idinfo <- idinfo %>% dplyr:: select(-c(access, mr, file))
+traitsfile <- write_simple(idinfo,
+	file.path(config$outdir, "resources", "neo4j_stage", "traits.csv.gz"),
+	id1="id",
+	id1name="ogid"
+)
 
 # Genes
-load("resources/genes.rdata")
+load(file.path(config$outdir, "resources", "genes.rdata"))
 genesgr <- subset(genesgr, !duplicated(ensembl_gene_id)) %>% as_tibble()
 names(genesgr)[1] <- "chr"
 genesgr$chr <- as.character(genesgr$chr)
-genesfile <- write_simple(genesgr, "resources/neo4j_stage/genes.csv.gz", "ensembl_gene_id", "ensembl_gene_id")
+genesfile <- write_simple(genesgr,
+	file.path(config$outdir, "resources", "neo4j_stage", "genes.csv.gz"),
+	id1="ensembl_gene_id",
+	id1name="ensembl_gene_id"
+)
 
 
 
@@ -36,140 +70,34 @@ genesfile <- write_simple(genesgr, "resources/neo4j_stage/genes.csv.gz", "ensemb
 
 # - Variant-Gene
 # Add 500kb region around each gene
-load("resources/genes.rdata")
+load(file.path(config$outdir, "resources", "genes.rdata"))
 genesgr <- subset(genesgr, !duplicated(ensembl_gene_id)) %>% as_tibble()
 genesgr$origstart <- genesgr$start
 genesgr$start <- pmax(0, genesgr$start - 500000)
 genesgr$end <- genesgr$end + 500000
 genesgr$width <- genesgr$end - genesgr$start + 1
 genesgr <- GRanges(genesgr)
-vars <- GRanges(variants$chr, IRanges(start=variants$pos, end=variants$pos), rsid = variants$rsid)
-a <- findOverlaps(vars, genesgr) %>% as_tibble
-b <- bind_cols(vars[a$queryHits,] %>% as_tibble(), genesgr[a$subjectHits,] %>% as_tibble())
-b$tss_dist <- abs(b$start - b$origstart)
+vars <- variants %>% 
+	dplyr::filter(chr != "0" & pos != 0) %>%
+	{GRanges(.$chr, IRanges(start=.$pos, end=.$pos), rsid = .$rsid)}
+a <- findOverlaps(vars, genesgr) %>% as_tibble()
+b <- bind_cols(
+	vars[a$queryHits,] %>% as_tibble() %>% dplyr::select(rsid, varpos=start),
+	genesgr[a$subjectHits,] %>% as_tibble()
+)
+b$tss_dist <- abs(b$varpos - b$origstart)
 gv <- tibble(ensembl_gene_id = b$ensembl_gene_id, variant = b$rsid, tss_dist = b$tss_dist)
 
-gvfile <- write_simple(gv, "resources/neo4j_stage/gv.csv.gz", "ensembl_gene_id", "ensembl_gene_id", "variant", "variant")
-
-
-# - variant-Trait
-vt <- list()
-vtinst <- list()
-for(i in 1:nrow(idinfo))
-{
-	x <- idinfo$id[i]
-	message(x, " - ", i, " of ", nrow(idinfo))
-	a <- readml(file.path("../gwas-files", x, "derived/instruments/ml.csv.gz"), idinfo, format="none")
-	a <- subset(a, SNP %in% vars$rsid)
-	a$bgcid <- x
-	vt[[i]] <- subset(a, select=c(SNP, bgcid, beta, se, pval, eaf, samplesize, ncase, ncontrol))
-	vtinst[[i]] <- subset(vt[[i]], a$instrument)
-	vt[[i]]$proxy <- !is.na(a$proxy_chr)
-}
-
-vtfiles <- write_split(vt, 200, "resources/neo4j_stage/vt", "SNP", "variant", "bgcid", "bgcid")
-vtinst <- bind_rows(vtinst)
-vtinstfile <- write_simple(vtinst, "resources/neo4j_stage/instruments.csv.gz", "SNP", "variant", "bgcid", "bgcid")
-
-
-# mr
-# mrmoe
-# mrhet
-# mrintercept
-# metrics
-
-mr <- list()
-mrmoe <- list()
-mrhet <- list()
-mrintercept <- list()
-metrics <- list()
-for(i in 1:nrow(idinfo))
-{
-	x <- idinfo$id[i]
-	message(x, " - ", i, " of ", nrow(idinfo))
-	load(file.path("../gwas-files", x, "derived/instruments/mr.rdata"))
-
-	estimates <- lapply(scan, function(x) {
-		if(is.null(x$estimates)) return(NULL)
-		estimates <- x$estimates
-		if("MOE" %in% names(estimates))
-		{
-			estimates <- dplyr::select(estimates, -c(method2, steiger_filtered, outlier_filtered))
-		} else {
-			estimates$selection <- "Tophits"
-			estimates$selection[estimates$steiger_filtered & estimates$outlier_filtered] <- "DF + HF"
-			estimates$selection[!estimates$steiger_filtered & estimates$outlier_filtered] <- "HF"
-			estimates$selection[estimates$steiger_filtered & !estimates$outlier_filtered] <- "DF"
-			estimates <- estimates %>% dplyr::select(-c(steiger_filtered, outlier_filtered))
-			estimates$MOE <- 0
-			ind <- estimates$method %in% c("Wald ratio", "FE IVW", "Steiger null") & estimates$selection == "DF"
-			estimates$MOE[ind] <- 1
-			ind <- is.infinite(estimates$b)
-			estimates$b[ind] <- 0
-			estimates$se[ind] <- NA
-			estimates$ci_low[ind] <- NA
-			estimates$ci_upp[ind] <- NA
-			estimates$pval[ind] <- 1
-		}
-		estimates
-	}) %>% bind_rows
-	if(nrow(estimates) == 0)
-		next
-
-	names(estimates)[names(estimates) == "MOE"] <- "moescore"
-	mr[[i]] <- estimates
-
-	mrmoe[[i]] <- group_by(estimates, id.exposure, id.outcome) %>% 
-	filter(moescore == max(moescore)) %>% dplyr::slice(1)
-
-	het <- lapply(scan, function(x) x$heterogeneity) %>% bind_rows
-	if(nrow(het) > 0)	
-	{
-		het$selection <- "Tophits"
-		het$selection[het$steiger_filtered & het$outlier_filtered] <- "DF + HF"
-		het$selection[!het$steiger_filtered & het$outlier_filtered] <- "HF"
-		het$selection[het$steiger_filtered & !het$outlier_filtered] <- "DF"
-		het <- het %>% dplyr::select(-c(steiger_filtered, outlier_filtered))
-		names(het)[names(het) == "Q"] <- "q"
-		mrhet[[i]] <- het
-	}
-
-	intercept <- lapply(scan, function(x) x$directional_pleiotropy) %>% bind_rows
-	if(nrow(intercept) > 0)
-	{
-		intercept$selection <- "Tophits"
-		intercept$selection[intercept$steiger_filtered & intercept$outlier_filtered] <- "DF + HF"
-		intercept$selection[!intercept$steiger_filtered & intercept$outlier_filtered] <- "HF"
-		intercept$selection[intercept$steiger_filtered & !intercept$outlier_filtered] <- "DF"
-		intercept <- intercept %>% dplyr::select(-c(steiger_filtered, outlier_filtered))		
-	}
-	mrintercept[[i]] <- intercept
-
-	met <- lapply(scan, function(x) x$info) %>% bind_rows
-	if(nrow(met) > 0)
-	{
-		met$selection <- "Tophits"
-		met$selection[met$steiger_filtered & met$outlier_filtered] <- "DF + HF"
-		met$selection[!met$steiger_filtered & met$outlier_filtered] <- "HF"
-		met$selection[met$steiger_filtered & !met$outlier_filtered] <- "DF"
-		met <- met %>% dplyr::select(-c(steiger_filtered, outlier_filtered))
-		metrics[[i]] <- met
-	}
-}
-
-mrhetfiles <- write_simple(mrhet, 200, "resources/neo4j_stage/mrhet", "id.exposure", "bgcid", "id.outcome", "bgcid")
-mrinterceptfiles <- write_simple(mrintercept, 200, "resources/neo4j_stage/mrintercept", "id.exposure", "bgcid", "id.outcome", "bgcid")
-mrmoefiles <- write_simple(mrmoe, "resources/neo4j_stage/mrmoe", "id.exposure", "bgcid", "id.outcome", "bgcid")
-metricsfiles <- write_simple(metrics, "resources/neo4j_stage/metrics", "id.exposure", "bgcid", "id.outcome", "bgcid")
-mrfiles <- write_split(mr, 200, "resources/neo4j_stage/mr", "id.exposure", "bgcid", "id.outcome", "bgcid")
+gvfile <- write_simple(gv, 
+	file.path(config$outdir, "resources", "neo4j_stage", "gv.csv.gz"),
+	id1="ensembl_gene_id", id1name="ensembl_gene_id", id2="variant", id2name="variant")
 
 
 
-
-system("rm -rf ~/mr-eve/neo4j/neo4j-enterprise-3.5.3/data/databases/graph.db")
+system(paste0("rm -rf ", config$neo4j, "/data/databases/graph.db"))
 
 cmd <- paste0(
-"~/mr-eve/neo4j/neo4j-enterprise-3.5.3/bin/neo4j-admin import", 
+config$neo4j, "/bin/neo4j-admin import", 
 " --database graph.db", 
 " --id-type string", 
 " --nodes:GENE ", genesfile, 
