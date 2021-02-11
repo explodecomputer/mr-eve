@@ -33,5 +33,14 @@
 		"ncpu": "10",
 		"mem": "15G",
 		"partition": "cpu,veryshort,mrcieu"
+	},
+	"collect_neo4j_mr" :
+	{
+		"name": "{rule}.{wildcards.chunk}",
+		"output": "{OUTDIR}/job_reports/{rule}.{wildcards.chunk}.out",
+		"time": "6:00:00",
+		"ncpu": "10",
+		"mem": "15G",
+		"partition": "cpu,veryshort,mrcieu"
 	}
 }

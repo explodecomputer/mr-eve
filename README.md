@@ -66,7 +66,7 @@ snakemake -prk \
   --mem={cluster.mem} \
   --output={cluster.output} \
   --parsable" \
---cluster-status ./slurm_status.py
+  --cluster-status ./slurm_status.py
 ```
 
 On bc4 it has to run in the background, like in screen for example. To test that it is submitting 

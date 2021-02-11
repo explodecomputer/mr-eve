@@ -22,7 +22,7 @@ IDLIST = OUTDIR + "/resources/ids.txt"
 INSTRUMENTLIST = OUTDIR + "/resources/instruments.txt"
 
 # all ids in gwasdir
-ID = [x.strip() for x in [y for y in os.listdir(GWASDIR)] if 'eqtl-a' not in x][1:10]
+ID = [x.strip() for x in [y for y in os.listdir(GWASDIR)] if 'eqtl-a' not in x]
 
 CHUNKS=list(range(1,201))
 NTHREAD=10
@@ -283,6 +283,7 @@ rule create_neo4j_db:
 			" --relationships:MRINTERCEPT " + inte + \
 			" --relationships:MRHET " + het + \
 			" --relationships:METRICS " + met
-		os.system(cmd)
+		print(cmd)
+		# os.system(cmd)
 
 # Upload neo4j ...
