@@ -34,13 +34,21 @@
 		"mem": "15G",
 		"partition": "cpu,veryshort,mrcieu"
 	},
+	"neo4j_mr" :
+	{
+		"name": "{rule}.{wildcards.id}",
+		"output": "{OUTDIR}/job_reports/{rule}.{wildcards.id}.out",
+		"partition": "cpu,veryshort,mrcieu"
+	},
 	"collect_neo4j_mr" :
 	{
 		"name": "{rule}.{wildcards.chunk}",
 		"output": "{OUTDIR}/job_reports/{rule}.{wildcards.chunk}.out",
-		"time": "6:00:00",
-		"ncpu": "10",
-		"mem": "15G",
 		"partition": "cpu,veryshort,mrcieu"
+	},
+	"create_neo4j_db" :
+	{
+		"time": "12:00:00",
+		"mem": "100G"
 	}
 }

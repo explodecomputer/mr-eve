@@ -53,7 +53,7 @@ estimates <- lapply(scan, function(x) {
 
 write_empty <- function(fn)
 {
-	con <- gzfile(mrout, "w")
+	con <- gzfile(fn, "w")
 	writeLines("", con)
 	close(con)	
 }
@@ -61,9 +61,9 @@ write_empty <- function(fn)
 if(nrow(estimates) == 0)
 {
 	write_empty(mrout)
-	write_empty(hetout)
 	write_empty(moeout)
 	write_empty(intout)
+	write_empty(hetout)
 	write_empty(metout)
 	write_empty(vtout)
 	write_empty(instout)
@@ -95,6 +95,8 @@ if(nrow(intercept) > 0)
 	write_empty(intout)
 }
 
+expected_columns <- c("id.exposure", "id.outcome", "nsnp", "nout", "nexp", "meanF", "varF", "medianF", "egger_isq", "sct", "Isq", "Isqe", "Qdiff", "intercept", "dfb1_ivw", "dfb2_ivw", "dfb3_ivw", "cooks_ivw", "dfb1_egger", "dfb2_egger", "dfb3_egger", "cooks_egger", "homosc_ivw", "homosc_egg", "shap_ivw", "shap_egger", "ks_ivw", "ks_egger", "nsnp_removed", "selection")
+
 met <- lapply(scan, function(x) x$info) %>% 
 	bind_rows()
 if(nrow(met) > 0)
@@ -104,6 +106,13 @@ if(nrow(met) > 0)
 	met$selection[!met$steiger_filtered & met$outlier_filtered] <- "HF"
 	met$selection[met$steiger_filtered & !met$outlier_filtered] <- "DF"
 	met <- met %>% dplyr::select(-c(steiger_filtered, outlier_filtered))
+	if(!all(expected_columns %in% names(met)))
+	{
+		temp <- as.list(rep(NA, length(expected_columns)))
+		names(temp) <- expected_columns
+		temp <- l %>% dplyr::bind_cols()
+		met <- dplyr::bind_rows(temp, met) %>% dplyr::slice(-1)
+	}
 	write_simple(met, metout, "id.exposure", "ogid", "id.outcome", "ogid", col.names=FALSE)
 } else {
 	write_empty(metout)
@@ -132,7 +141,7 @@ if(nrow(het) > 0)
 rsid <- scan(file.path(config$outdir, "resources", "instruments.txt"), what=character())
 
 load(file.path(config$outdir, "resources", "ids.txt.rdata"))
-idinfo <- idinfo %>% dplyr:: select(-c(access, mr, file))
+idinfo <- idinfo %>% dplyr:: select(-c(mr, file))
 
 vtpath <- file.path(config$outdir, "data", id, "ml.csv.gz")
 stopifnot(file.exists(vtpath))

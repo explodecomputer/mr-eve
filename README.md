@@ -53,6 +53,7 @@ In principle this should then run from the root directory
 
 ```
 export TMPDIR=/mnt/storage/private/mrcieu/research/mr-eve/tmpdir
+module add languages/anaconda3/5.2.0-tflow-1.11
 snakemake -prk \
 -j 200 \
 --cluster-config bc4-cluster.json \

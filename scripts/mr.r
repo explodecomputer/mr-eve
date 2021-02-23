@@ -1,15 +1,4 @@
-suppressWarnings(suppressPackageStartupMessages({
-	library(TwoSampleMR)
-	library(mrever)
-	library(tidyverse)
-	library(car)
-	library(randomForest)
-	library(parallel)
-	library(argparse)
-}))
-
-
-
+library(argparse)
 # create parser object
 parser <- ArgumentParser()
 parser$add_argument('--idlist', required=TRUE)
@@ -26,6 +15,26 @@ str(args)
 id <- args[["id"]]
 filename <- file.path(args[["outdir"]], "data", id, "ml.csv.gz")
 stopifnot(file.exists(filename))
+
+outfile <- file.path(args[["outdir"]], "data", id, "mr.rdata")
+if(file.exists(outfile))
+{
+	system(paste0("touch ", outfile))
+	message("file already exists")
+	q()
+}
+
+## continue
+
+suppressWarnings(suppressPackageStartupMessages({
+	library(TwoSampleMR)
+	library(mrever)
+	library(tidyverse)
+	library(car)
+	library(randomForest)
+	library(parallel)
+}))
+
 
 message("reading id lists")
 
@@ -95,4 +104,4 @@ names(scan) <- param$id
 param$available <- TRUE
 param$available[sapply(scan, is.null)] <- FALSE
 
-save(scan, param, file=file.path(args[["outdir"]], "data", id, "mr.rdata"))
+save(scan, param, file=outfile)

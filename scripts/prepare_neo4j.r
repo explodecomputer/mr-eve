@@ -1,9 +1,9 @@
 # Make trait, snp and gene nodes
+library(jsonlite)
 library(mrever)
 library(tidyverse)
 library(data.table)
 library(GenomicRanges)
-library(jsonlite)
 library(myvariant)
 library(ieugwasr)
 library(parallel)
@@ -16,6 +16,7 @@ dir.create(file.path(config$outdir, "resources", "neo4j_stage"))
 # read instrument list
 
 rsid <- scan(file.path(config$outdir, "resources", "instruments.txt"), what=character())
+# rsid <- scan("instruments.txt", "")
 list1 <- ieugwasr::afl2_rsid(rsid) %>% 
 	dplyr::select(chr, pos=start, ref=ref, alt=alt, rsid=rsid) %>%
 	dplyr::mutate(build="hg19")
@@ -44,12 +45,24 @@ variantsfile <- write_simple(variants,
 
 # Traits
 load(file.path(config$outdir, "resources", "ids.txt.rdata"))
-idinfo <- idinfo %>% dplyr:: select(-c(access, mr, file))
+idinfo <- idinfo %>% 
+	dplyr::select(-c(mr, file)) %>%
+	dplyr::mutate(
+		trait=gsub('"', '', trait),
+		note=gsub('"', '', trait)
+	)
+# idinfo <- list.files(file.path(config['outdir'], 'data')) %>% 
+# 	{.[!. %in% idinfo$id]} %>%
+# 	{tibble(id=.)} %>%
+# 	bind_rows(idinfo, .)
+
 traitsfile <- write_simple(idinfo,
 	file.path(config$outdir, "resources", "neo4j_stage", "traits.csv.gz"),
 	id1="id",
 	id1name="ogid"
 )
+
+
 
 # Genes
 load(file.path(config$outdir, "resources", "genes.rdata"))
@@ -91,30 +104,4 @@ gv <- tibble(ensembl_gene_id = b$ensembl_gene_id, variant = b$rsid, tss_dist = b
 gvfile <- write_simple(gv, 
 	file.path(config$outdir, "resources", "neo4j_stage", "gv.csv.gz"),
 	id1="ensembl_gene_id", id1name="ensembl_gene_id", id2="variant", id2name="variant")
-
-
-
-system(paste0("rm -rf ", config$neo4j, "/data/databases/graph.db"))
-
-cmd <- paste0(
-config$neo4j, "/bin/neo4j-admin import", 
-" --database graph.db", 
-" --id-type string", 
-" --nodes:GENE ", genesfile, 
-" --nodes:VARIANT ", variantsfile, 
-" --nodes:TRAIT ", traitsfile, 
-" --relationships:ANNOTATION ", gvfile, 
-" --relationships:INSTRUMENT ", vtinstfile, 
-" --relationships:GENASSOC ", vtfiles, 
-" --relationships:MR ", mrfiles, 
-" --relationships:MRMOE ", mrmoefiles,
-" --relationships:MRINTERCEPT ", mrinterceptfiles,
-" --relationships:MRHET ", mrhetfiles,
-" --relationships:METRICS ", metricsfiles
-)
-
-
-print(cmd)
-
-system(cmd)
 
