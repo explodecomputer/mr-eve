@@ -140,3 +140,6 @@ Also, need to copy across any new elastic files and update bcf directory
 - generate per-variant heterogeneity stats
 
 After MR has been performed we can go back and estimate the heterogeneity for every SNP.
+
+- Unit tests to to see that MR on vcf files gives same results as MR via the API
+- Create environments for running R and python scripts
